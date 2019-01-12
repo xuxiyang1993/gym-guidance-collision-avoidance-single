@@ -1,4 +1,4 @@
-**Status:** Under development, can guarantee bug-free
+**Status:** Under development, can **NOT** guarantee bug-free
 
 # gym-guidance-collision-avoidance-single
 

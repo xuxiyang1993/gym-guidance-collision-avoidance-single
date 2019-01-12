@@ -17,4 +17,10 @@ pip install -e .
 
 # MCTS
 
-Use Monte Carlo Tree Search Algorithm to solve this problem. Details can be found at the above reference.
+Use Monte Carlo Tree Search Algorithm to solve this problem. Details can be found at the above reference. Run
+
+```bash
+python Agent.py
+```
+
+`env.render()` is currently under working.

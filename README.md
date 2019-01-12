@@ -1,4 +1,4 @@
-**Status:** Archive (code is provided as-is, no updates expected)
+**Status:** Under development, can guarantee bug-free
 
 # gym-guidance-collision-avoidance-single
 

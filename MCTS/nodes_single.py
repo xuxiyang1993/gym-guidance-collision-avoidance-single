@@ -3,7 +3,7 @@ import itertools
 import math
 import numpy as np
 
-from config_single import Config
+from config import Config
 from common import MCTSNode, MCTSState
 
 

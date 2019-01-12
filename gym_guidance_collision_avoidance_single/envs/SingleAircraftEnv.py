@@ -5,13 +5,14 @@ import pygame
 from pygame.locals import *
 from configparser import ConfigParser
 
-from gym import core, spaces
+import gym
+from gym import spaces
 from gym.utils import seeding
 
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
 
-class SingleAircraftEnv(core.Env):
+class SingleAircraftEnv(gym.Env):
     """
     This is the airspace simulator where we can control single aircraft (yellow aircraft)
     to reach the goal position (green star) while avoiding conflicts with other intruder aircraft (red aircraft).
@@ -43,14 +44,34 @@ class SingleAircraftEnv(core.Env):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
+        np.random.seed(seed)
         return [seed]
+
+    def load_config(self):
+        parser = ConfigParser(os.environ)
+        parser.read(self.config_path)
+        # input dim
+        self.window_width = parser.getint('simulator', 'width')
+        self.window_height = parser.getint('simulator', 'height')
+        self.intruder_size = parser.getint('simulator', 'intruder_size')
+        self.EPISODES = parser.getint('simulator', 'EPISODES')
+        self.G = parser.getfloat('simulator', 'G')
+        self.tick = parser.getint('simulator', 'tick')
+        self.scale = parser.getint('simulator', 'SCALE')
+        self.minimum_separation = parser.getint('simulator', 'minimum_separation')/self.scale
+        self.NMAC_dist = parser.getint('simulator', 'NMAC_dist')/self.scale
+        self.horizon_dist = parser.getint('simulator', 'horizon_dist')/self.scale
+        self.initial_min_dist = parser.getint('simulator', 'initial_min_dist')/self.scale
+        self.goal_radius = parser.getint('simulator', 'goal_radius')/self.scale
+        self.min_speed = parser.getint('aircraft_model', 'min_speed')/self.scale
+        self.max_speed = parser.getint('aircraft_model', 'max_speed')/self.scale
 
     def reset(self):
         # ownship = recordtype('ownship', ['position', 'velocity', 'speed', 'heading', 'bank'])
         # intruder = recordtype('intruder', ['id', 'position', 'velocity'])
         # goal = recordtype('goal', ['position'])
 
-        self.drone = ownship(
+        self.drone = Ownship(
             position=(self.window_width - 50, self.window_height - 50),
             speed=self.min_speed,
             heading=45,
@@ -59,7 +80,7 @@ class SingleAircraftEnv(core.Env):
 
         self.intruder_list = []
         for _ in range(self.intruder_size):
-            intruder = aircraft(
+            intruder = Aircraft(
                 position=self.random_pos(),
                 speed=self.random_speed(),
                 heading=self.random_heading(),
@@ -69,27 +90,8 @@ class SingleAircraftEnv(core.Env):
 
             self.intruder_list.append(intruder)
 
-        self.goal = goal(position=self.random_pos())
+        self.goal = Goal(position=self.random_pos())
         return self._get_ob()
-
-    def load_config(self):
-        parser = ConfigParser(os.environ)
-        parser.read(self.config_path)
-        # input dim
-        self.window_width = parser.getint('default', 'width')
-        self.window_height = parser.getint('default', 'height')
-        self.intruder_size = parser.getint('default', 'intruder_size')
-        self.EPISODES = parser.getint('default', 'EPISODES')
-        self.G = parser.getfloat('default', 'G')
-        self.tick = parser.getint('default', 'tick')
-        self.scale = parser.getint('default', 'SCALE')
-        self.minimum_separation = parser.getint('default', 'minimum_separation')/self.scale
-        self.NMAC_dist = parser.getint('default', 'NMAC_dist')/self.scale
-        self.horizon_dist = parser.getint('default', 'horizon_dist')/self.scale
-        self.initial_min_dist = parser.getint('default', 'initial_min_dist')/self.scale
-        self.goal_radius = parser.getint('default', 'goal_radius')/self.scale
-        self.min_speed = parser.getint('aircraft_model', 'min_speed')/self.scale
-        self.max_speed = parser.getint('aircraft_model', 'max_speed')/self.scale
 
     def _get_ob(self):
         s = []
@@ -114,6 +116,7 @@ class SingleAircraftEnv(core.Env):
 
     def step(self, a):
         # intruder aircraft
+        assert self.action_space.contains(a), 'given action is in incorrect shape'
         for id in range(self.intruder_size):
             intruder = self.intruder_list[id]
             intruder.position += intruder.velocity
@@ -129,25 +132,25 @@ class SingleAircraftEnv(core.Env):
 
     def _terminal_reward(self):
         if not self.position_range.contains(self.drone.position):
-            return 0, True, 'wall'
+            return 0, True, 'w'
         for intruder in self.intruder_list:
             if dist(self.drone, intruder) < self.minimum_separation:
-                return 0, True, 'conflict'
+                return 0, True, 'c'
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 1, True, 'goal'
+            return 1, True, 'g'
         return 0, False, ''
 
     def render(self, mode='human'):
-        pygame.init()
-        screen = pygame.display.set_mode(self.window_width, self.window_height)
-        clock = pygame.time.Clock()
-        gameIcon = pygame.image.load('image/intruder.png')
-        pygame.display.set_icon(gameIcon)
-        pygame.display.set_caption('Free Flight Airspace Simulator', 'Spine Runtime')
-        pass
+        # pygame.init()
+        # screen = pygame.display.set_mode(self.window_width, self.window_height)
+        # clock = pygame.time.Clock()
+        # gameIcon = pygame.image.load('image/intruder.png')
+        # pygame.display.set_icon(gameIcon)
+        # pygame.display.set_caption('Free Flight Airspace Simulator', 'Spine Runtime')
+        return
 
     def reset_intruder(self):
-        intruder = aircraft(
+        intruder = Aircraft(
             position=self.random_pos(),
             speed=self.random_speed(),
             heading=self.random_heading(),
@@ -182,12 +185,12 @@ class SingleAircraftEnv(core.Env):
         return s
 
 
-class goal:
+class Goal:
     def __init__(self, position):
         self.position = position
 
 
-class aircraft:
+class Aircraft:
     def __init__(self, position, speed, heading):
         self.position = np.array(position, dtype=np.float32)
         self.speed = speed
@@ -198,9 +201,9 @@ class aircraft:
         self.velocity = np.array([vx, vy], dtype=np.float32)
 
 
-class ownship(aircraft):
+class Ownship(Aircraft):
     def __init__(self, position, speed, heading, config_path):
-        aircraft.__init__(self, position, speed, heading)
+        Aircraft.__init__(self, position, speed, heading)
         self.bank = 0  # degree
         self.delta_heading = 0
 
@@ -210,8 +213,8 @@ class ownship(aircraft):
         parser = ConfigParser(os.environ)
         parser.read(config_path)
 
-        self.G = parser.getfloat('default', 'G')
-        self.scale = parser.getint('default', 'scale')
+        self.G = parser.getfloat('simulator', 'G')
+        self.scale = parser.getint('simulator', 'scale')
         self.min_speed = parser.getint('aircraft_model', 'min_speed')/self.scale
         self.max_speed = parser.getint('aircraft_model', 'max_speed')/self.scale
         self.d_speed = parser.getint('aircraft_model', 'd_speed')/self.scale

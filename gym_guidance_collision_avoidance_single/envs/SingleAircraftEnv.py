@@ -9,6 +9,8 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 
+from config import Config
+
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
 
@@ -32,8 +34,7 @@ class SingleAircraftEnv(gym.Env):
         self.load_config()
         state_dimension = self.intruder_size * 4 + 9
         high = np.ones(shape=[1, state_dimension]) * 100000
-        low = -high
-        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        self.observation_space = spaces.Box(low=-high, high=high, dtype=np.float32)
         self.position_range = spaces.Box(
             low=np.array([0, 0]),
             high=np.array([self.window_width, self.window_height]),
@@ -66,6 +67,11 @@ class SingleAircraftEnv(gym.Env):
         self.min_speed = parser.getint('aircraft_model', 'min_speed')/self.scale
         self.max_speed = parser.getint('aircraft_model', 'max_speed')/self.scale
 
+    # def load_config(self):
+    #     config = Config
+    #     self.window_width = Config.window_width
+    #     self.window_height = Config.window_height
+
     def reset(self):
         # ownship = recordtype('ownship', ['position', 'velocity', 'speed', 'heading', 'bank'])
         # intruder = recordtype('intruder', ['id', 'position', 'velocity'])
@@ -91,11 +97,15 @@ class SingleAircraftEnv(gym.Env):
             self.intruder_list.append(intruder)
 
         self.goal = Goal(position=self.random_pos())
+
+        self.no_conflict = 0
+
         return self._get_ob()
 
     def _get_ob(self):
         s = []
         for i in range(self.intruder_size):
+            # (x, y, vx, vy)
             s.append(self.intruder_list[i].position[0])
             s.append(self.intruder_list[i].position[1])
             s.append(self.intruder_list[i].velocity[0])
@@ -114,30 +124,47 @@ class SingleAircraftEnv(gym.Env):
 
         return np.array(s)
 
-    def step(self, a):
+    def step(self, action):
         # intruder aircraft
-        assert self.action_space.contains(a), 'given action is in incorrect shape'
-        for id in range(self.intruder_size):
-            intruder = self.intruder_list[id]
-            intruder.position += intruder.velocity
-            if not self.position_range.contains(intruder.position):
-                self.intruder_list[id] = self.reset_intruder()
+        assert self.action_space.contains(action), 'given action is in incorrect shape'
 
-        # ownship aircraft
-        self.drone.step(a)
+        self.drone.step(action)
 
         reward, terminal, info = self._terminal_reward()
 
         return self._get_ob(), reward, terminal, info
 
     def _terminal_reward(self):
+
+        # step the intruder aircraft
+        conflict = False
+        for idx in range(self.intruder_size):
+            intruder = self.intruder_list[idx]
+            intruder.position += intruder.velocity
+            dist_intruder = dist(self.drone, intruder)
+            if not self.position_range.contains(intruder.position):
+                self.intruder_list[idx] = self.reset_intruder()
+
+            if dist_intruder < self.minimum_separation:
+                conflict = True
+                if intruder.conflict == False:
+                    self.no_conflict += 1
+                    intruder.conflict = True
+                else:
+                    if not dist_intruder < self.minimum_separation:
+                        intruder.conflict = False
+
+                if dist_intruder < self.NMAC_dist:
+                    return -5, True, 'n'  # NMAC
+
+        if conflict:
+            return -1, False, 'c'  # conflict
+
         if not self.position_range.contains(self.drone.position):
-            return 0, True, 'w'
-        for intruder in self.intruder_list:
-            if dist(self.drone, intruder) < self.minimum_separation:
-                return 0, True, 'c'
+            return -1, True, 'w'  # out-of-map
+
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 1, True, 'g'
+            return 1, True, 'g'  # goal
         return 0, False, ''
 
     def render(self, mode='human'):
@@ -199,6 +226,8 @@ class Aircraft:
         vx = -self.speed * math.sin(self.rad)
         vy = -self.speed * math.cos(self.rad)
         self.velocity = np.array([vx, vy], dtype=np.float32)
+
+        self.conflict = False
 
 
 class Ownship(Aircraft):

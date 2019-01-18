@@ -6,7 +6,7 @@ Reference:  https://www.researchgate.net/publication/327174624_Autonomous_On-Dem
 
 Control a single aircraft to reach the goal position while avoiding conflicts with other intruder aircraft.
 
-Parameter of this simulator can be found in `configs/config_file.ini`.
+Parameter of this simulator can be found in `config.py`.
 
 ## Installation
 

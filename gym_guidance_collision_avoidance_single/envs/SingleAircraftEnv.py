@@ -36,7 +36,8 @@ class SingleAircraftEnv(gym.Env):
             low=np.array([0, 0]),
             high=np.array([self.window_width, self.window_height]),
             dtype=np.float32)
-        self.action_space = spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3)))
+        # self.action_space = spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3)))
+        self.action_space = spaces.Discrete(9)
         self.state = None
         self.seed(2)
 
@@ -114,7 +115,11 @@ class SingleAircraftEnv(gym.Env):
 
     def step(self, action):
         # intruder aircraft
-        assert self.action_space.contains(action), 'given action is in incorrect shape'
+        a = np.zeros(2)
+        a[0] = action // 3
+        a[1] = action % 3
+        action = a
+        # assert self.action_space.contains(action), 'given action is in incorrect shape'
 
         self.drone.step(action)
 

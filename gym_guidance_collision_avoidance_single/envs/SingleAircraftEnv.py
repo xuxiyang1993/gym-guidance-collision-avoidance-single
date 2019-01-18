@@ -3,13 +3,11 @@ import math
 import os
 import pygame
 from pygame.locals import *
-from configparser import ConfigParser
-
 import gym
 from gym import spaces
 from gym.utils import seeding
 
-# from config import Config
+from config import Config
 
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
@@ -29,8 +27,7 @@ class SingleAircraftEnv(gym.Env):
     The action is either applying +1, 0 or -1 for the change of bank angle and +1, 0, -1 for the change of acceleration
     """
 
-    def __init__(self, config_path):
-        self.config_path = config_path
+    def __init__(self):
         self.load_config()
         state_dimension = self.intruder_size * 4 + 9
         high = np.ones(shape=[1, state_dimension]) * 100000
@@ -49,28 +46,21 @@ class SingleAircraftEnv(gym.Env):
         return [seed]
 
     def load_config(self):
-        parser = ConfigParser(os.environ)
-        parser.read(self.config_path)
         # input dim
-        self.window_width = parser.getint('simulator', 'width')
-        self.window_height = parser.getint('simulator', 'height')
-        self.intruder_size = parser.getint('simulator', 'intruder_size')
-        self.EPISODES = parser.getint('simulator', 'EPISODES')
-        self.G = parser.getfloat('simulator', 'G')
-        self.tick = parser.getint('simulator', 'tick')
-        self.scale = parser.getint('simulator', 'SCALE')
-        self.minimum_separation = parser.getint('simulator', 'minimum_separation')/self.scale
-        self.NMAC_dist = parser.getint('simulator', 'NMAC_dist')/self.scale
-        self.horizon_dist = parser.getint('simulator', 'horizon_dist')/self.scale
-        self.initial_min_dist = parser.getint('simulator', 'initial_min_dist')/self.scale
-        self.goal_radius = parser.getint('simulator', 'goal_radius')/self.scale
-        self.min_speed = parser.getint('aircraft_model', 'min_speed')/self.scale
-        self.max_speed = parser.getint('aircraft_model', 'max_speed')/self.scale
-
-    # def load_config(self):
-    #     config = Config
-    #     self.window_width = Config.window_width
-    #     self.window_height = Config.window_height
+        self.window_width = Config.window_width
+        self.window_height = Config.window_height
+        self.intruder_size = Config.intruder_size
+        self.EPISODES = Config.EPISODES
+        self.G = Config.G
+        self.tick = Config.tick
+        self.scale = Config.scale
+        self.minimum_separation = Config.minimum_separation
+        self.NMAC_dist = Config.NMAC_dist
+        self.horizon_dist = Config.horizon_dist
+        self.initial_min_dist = Config.initial_min_dist
+        self.goal_radius = Config.goal_radius
+        self.min_speed = Config.min_speed
+        self.max_speed = Config.max_speed
 
     def reset(self):
         # ownship = recordtype('ownship', ['position', 'velocity', 'speed', 'heading', 'bank'])
@@ -80,8 +70,7 @@ class SingleAircraftEnv(gym.Env):
         self.drone = Ownship(
             position=(self.window_width - 50, self.window_height - 50),
             speed=self.min_speed,
-            heading=45,
-            config_path=self.config_path
+            heading=45
         )
 
         self.intruder_list = []
@@ -208,7 +197,6 @@ class SingleAircraftEnv(gym.Env):
             'heading': spaces.Box(low=0, high=360, dtype=np.float32),
             'speed': spaces.Box(low=self.min_speed, high=self.max_speed, dtype=np.float32),
         })
-
         return s
 
 
@@ -227,33 +215,31 @@ class Aircraft:
         vy = -self.speed * math.cos(self.rad)
         self.velocity = np.array([vx, vy], dtype=np.float32)
 
-        self.conflict = False
+        self.conflict = False  # track if this aircraft is in conflict with ownship
 
 
 class Ownship(Aircraft):
-    def __init__(self, position, speed, heading, config_path):
+    def __init__(self, position, speed, heading):
         Aircraft.__init__(self, position, speed, heading)
         self.bank = 0  # degree
         self.delta_heading = 0
 
-        self.load_config(config_path)
+        self.load_config()
 
-    def load_config(self, config_path):
-        parser = ConfigParser(os.environ)
-        parser.read(config_path)
+    def load_config(self):
 
-        self.G = parser.getfloat('simulator', 'G')
-        self.scale = parser.getint('simulator', 'scale')
-        self.min_speed = parser.getint('aircraft_model', 'min_speed')/self.scale
-        self.max_speed = parser.getint('aircraft_model', 'max_speed')/self.scale
-        self.d_speed = parser.getint('aircraft_model', 'd_speed')/self.scale
-        self.speed_sigma = parser.getint('uncertainty', 'speed_sigma')/self.scale
-        self.position_sigma = parser.getint('uncertainty', 'position_sigma')/self.scale
+        self.G = Config.G
+        self.scale = Config.scale
+        self.min_speed = Config.min_speed
+        self.max_speed = Config.max_speed
+        self.d_speed = Config.d_speed
+        self.speed_sigma = Config.speed_sigma
+        self.position_sigma = Config.position_sigma
 
-        self.min_bank = parser.getint('aircraft_model', 'min_bank')
-        self.max_bank = parser.getint('aircraft_model', 'max_bank')
-        self.d_bank = parser.getint('aircraft_model', 'd_bank')
-        self.bank_sigma = parser.getint('uncertainty', 'bank_sigma')
+        self.min_bank = Config.min_bank
+        self.max_bank = Config.max_bank
+        self.d_bank = Config.d_bank
+        self.bank_sigma = Config.bank_sigma
 
     def step(self, a):
         self.speed += self.d_speed * (a[1] - 1)

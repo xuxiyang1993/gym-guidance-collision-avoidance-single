@@ -1,33 +1,29 @@
-import os
-from configparser import ConfigParser
-
-
 class Config:
-    config_path = 'config/config_file.ini'
-    parser = ConfigParser(os.environ)
-    parser.read(config_path)
     # input dim
-    window_width = parser.getint('simulator', 'width')
-    window_height = parser.getint('simulator', 'height')
-    intruder_size = parser.getint('simulator', 'intruder_size')
-    EPISODES = parser.getint('simulator', 'EPISODES')
-    G = parser.getfloat('simulator', 'G')
-    tick = parser.getint('simulator', 'tick')
-    scale = parser.getint('simulator', 'SCALE')
-    minimum_separation = parser.getint('simulator', 'minimum_separation')/scale
-    NMAC_dist = parser.getint('simulator', 'NMAC_dist')/scale
-    horizon_dist = parser.getint('simulator', 'horizon_dist')/scale
-    initial_min_dist = parser.getint('simulator', 'initial_min_dist')/scale
-    goal_radius = parser.getint('simulator', 'goal_radius')/scale
-    min_speed = parser.getint('aircraft_model', 'min_speed')/scale
-    max_speed = parser.getint('aircraft_model', 'max_speed')/scale
-    d_speed = parser.getint('aircraft_model', 'd_speed') / scale
-    speed_sigma = parser.getint('uncertainty', 'speed_sigma') / scale
-    position_sigma = parser.getint('uncertainty', 'position_sigma') / scale
+    window_width = 800
+    window_height = 800
+    intruder_size = 10
+    EPISODES = 1000
+    G = 9.8
+    tick = 30
+    scale = 30
 
-    min_bank = parser.getint('aircraft_model', 'min_bank')
-    max_bank = parser.getint('aircraft_model', 'max_bank')
-    d_bank = parser.getint('aircraft_model', 'd_bank')
-    bank_sigma = parser.getint('uncertainty', 'bank_sigma')
+    # distance param
+    minimum_separation = 555/scale
+    NMAC_dist = 150/scale
+    horizon_dist = 4000/scale
+    initial_min_dist = 3000/scale
+    goal_radius = 600/scale
 
-    simulate_frame = parser.getint('algorithm', 'simulate_frame')
+    # speed
+    min_speed = 50/scale
+    max_speed = 80/scale
+    d_speed = 5/scale
+    speed_sigma = 2/scale
+    position_sigma = 10/scale
+
+    # bank
+    min_bank = -25
+    max_bank = 25
+    d_bank = 5
+    bank_sigma = 4

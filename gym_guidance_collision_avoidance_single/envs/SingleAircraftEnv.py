@@ -42,7 +42,6 @@ class SingleAircraftEnv(gym.Env):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
-        np.random.seed(seed)
         return [seed]
 
     def load_config(self):

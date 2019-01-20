@@ -158,6 +158,7 @@ class SingleAircraftEnv(gym.Env):
 
         if dist(self.drone, self.goal) < self.goal_radius:
             return 1, True, 'g'  # goal
+        return -dist(self.drone, self.goal)/1200, False, ''
         return 0, False, ''
 
     def render(self, mode='human'):

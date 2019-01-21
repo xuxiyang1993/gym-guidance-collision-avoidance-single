@@ -6,7 +6,7 @@ from collections import defaultdict
 import tensorflow as tf
 import numpy as np
 
-from gym_guidance_collision_avoidance_single.envs import SingleAircraftEnv
+from gym_guidance_collision_avoidance_single.envs import SingleAircraftEnv, SingleAircraft2Env
 
 from baselines.common.vec_env.vec_video_recorder import VecVideoRecorder
 from baselines.common.vec_env.vec_frame_stack import VecFrameStack

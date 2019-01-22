@@ -172,20 +172,23 @@ class SingleAircraftEnv(gym.Env):
         if self.drone is None:
             return None
 
-        ownship_img = rendering.Image('images/aircraft.png', 32, 32)
+        import os
+        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+        ownship_img = rendering.Image(os.path.join(__location__, 'images/aircraft.png'), 32, 32)
         jtransform = rendering.Transform(rotation=self.drone.heading - math.pi/2, translation=self.drone.position)
         ownship_img.add_attr(jtransform)
         ownship_img.set_color(255, 241, 4)  # set it to yellow
         self.viewer.onetime_geoms.append(ownship_img)
 
-        goal_img = rendering.Image('images/goal.png', 32, 32)
+        goal_img = rendering.Image(os.path.join(__location__, 'images/goal.png'), 32, 32)
         jtransform = rendering.Transform(rotation=0, translation=self.goal.position)
         goal_img.add_attr(jtransform)
         goal_img.set_color(15, 210, 81)  # green
         self.viewer.onetime_geoms.append(goal_img)
 
         for aircraft in self.intruder_list:
-            intruder_img = rendering.Image('images/intruder.png', 32, 32)
+            intruder_img = rendering.Image(os.path.join(__location__, 'images/intruder.png'), 32, 32)
             jtransform = rendering.Transform(rotation=aircraft.heading - math.pi/2, translation=aircraft.position)
             intruder_img.add_attr(jtransform)
             intruder_img.set_color(237, 26, 32)  # red color

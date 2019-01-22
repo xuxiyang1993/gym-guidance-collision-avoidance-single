@@ -33,7 +33,7 @@ class SingleAircraftEnv(gym.Env):
         self.viewer = None
 
         # build observation space and action space
-        state_dimension = self.intruder_size * 4 + 9
+        state_dimension = self.intruder_size * 4 + 8
         self.observation_space = spaces.Box(low=-1000, high=1000, shape=(state_dimension,), dtype=np.float32)
         self.action_space = spaces.Discrete(9)
         self.position_range = spaces.Box(

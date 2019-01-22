@@ -25,8 +25,8 @@ class Config:
     position_sigma = 10/scale
 
     # heading in deg TBD
-    d_heading = 5/math.pi
-    heading_sigma = 5/math.pi
+    d_heading = math.radians(5)
+    heading_sigma = math.radians(5)
 
     # bank
     min_bank = -25

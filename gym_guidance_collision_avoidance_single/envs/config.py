@@ -22,6 +22,10 @@ class Config:
     speed_sigma = 2/scale
     position_sigma = 10/scale
 
+    # heading in deg TBD
+    d_heading = 5
+    heading_sigma = 5
+
     # bank
     min_bank = -25
     max_bank = 25

@@ -1,4 +1,4 @@
-**Status:** Under development, can **NOT** guarantee bug-free
+**Status:** Active (under active development, breaking changes may occur)
 
 Reference:  https://www.researchgate.net/publication/327174624_Autonomous_On-Demand_Free_Flight_Operations_in_Urban_Air_Mobility_using_Monte_Carlo_Tree_Search
 

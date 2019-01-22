@@ -29,16 +29,18 @@ class SingleAircraftEnv(gym.Env):
 
     def __init__(self):
         self.load_config()
+        self.state = None
+        self.viewer = None
+
+        # build observation space and action space
         state_dimension = self.intruder_size * 4 + 9
-        high = np.ones(shape=[1, state_dimension]) * 100000
-        self.observation_space = spaces.Box(low=-high, high=high, dtype=np.float32)
+        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(state_dimension,), dtype=np.float32)
+        self.action_space = spaces.Discrete(9)
         self.position_range = spaces.Box(
             low=np.array([0, 0]),
             high=np.array([self.window_width, self.window_height]),
             dtype=np.float32)
-        # self.action_space = spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3)))
-        self.action_space = spaces.Discrete(9)
-        self.state = None
+
         self.seed(2)
 
     def seed(self, seed=None):
@@ -68,9 +70,9 @@ class SingleAircraftEnv(gym.Env):
         # goal = recordtype('goal', ['position'])
 
         self.drone = Ownship(
-            position=(self.window_width - 50, self.window_height - 50),
+            position=(50, 50),
             speed=self.min_speed,
-            heading=45
+            heading=math.pi/4
         )
 
         self.intruder_list = []
@@ -100,14 +102,13 @@ class SingleAircraftEnv(gym.Env):
             s.append(self.intruder_list[i].velocity[0])
             s.append(self.intruder_list[i].velocity[1])
         for i in range(1):
-            # (x, y, vx, vy, speed, heading, bank)
+            # (x, y, vx, vy, speed, heading)
             s.append(self.drone.position[0])
             s.append(self.drone.position[1])
             s.append(self.drone.velocity[0])
             s.append(self.drone.velocity[1])
             s.append(self.drone.speed)
             s.append(self.drone.heading)
-            s.append(self.drone.bank)
         s.append(self.goal.position[0])
         s.append(self.goal.position[1])
 
@@ -162,13 +163,40 @@ class SingleAircraftEnv(gym.Env):
         return 0, False, ''
 
     def render(self, mode='human'):
-        # pygame.init()
-        # screen = pygame.display.set_mode(self.window_width, self.window_height)
-        # clock = pygame.time.Clock()
-        # gameIcon = pygame.image.load('image/intruder.png')
-        # pygame.display.set_icon(gameIcon)
-        # pygame.display.set_caption('Free Flight Airspace Simulator', 'Spine Runtime')
-        return
+        from gym.envs.classic_control import rendering
+
+        if self.viewer is None:
+            self.viewer = rendering.Viewer(self.window_width, self.window_height)
+            self.viewer.set_bounds(0, self.window_width, 0, self.window_height)
+
+        if self.drone is None:
+            return None
+
+        ownship_img = rendering.Image('images/aircraft.png', 32, 32)
+        jtransform = rendering.Transform(rotation=self.drone.heading - math.pi/2, translation=self.drone.position)
+        ownship_img.add_attr(jtransform)
+        ownship_img.set_color(255, 241, 4)  # set it to yellow
+        self.viewer.onetime_geoms.append(ownship_img)
+
+        goal_img = rendering.Image('images/goal.png', 32, 32)
+        jtransform = rendering.Transform(rotation=0, translation=self.goal.position)
+        goal_img.add_attr(jtransform)
+        goal_img.set_color(15, 210, 81)  # green
+        self.viewer.onetime_geoms.append(goal_img)
+
+        for aircraft in self.intruder_list:
+            intruder_img = rendering.Image('images/intruder.png', 32, 32)
+            jtransform = rendering.Transform(rotation=aircraft.heading - math.pi/2, translation=aircraft.position)
+            intruder_img.add_attr(jtransform)
+            intruder_img.set_color(237, 26, 32)  # red color
+            self.viewer.onetime_geoms.append(intruder_img)
+
+        return self.viewer.render(return_rgb_array=False)
+
+    def close(self):
+        if self.viewer:
+            self.viewer.close()
+            self.viewer = None
 
     def reset_intruder(self):
         intruder = Aircraft(
@@ -191,7 +219,7 @@ class SingleAircraftEnv(gym.Env):
         return np.random.uniform(low=self.min_speed, high=self.max_speed)
 
     def random_heading(self):
-        return np.random.uniform(low=0, high=360)
+        return np.random.uniform(low=0, high=2*math.pi)
 
     def build_observation_space(self):
         s = spaces.Dict({
@@ -199,7 +227,7 @@ class SingleAircraftEnv(gym.Env):
             'own_y': spaces.Box(low=0, high=self.window_height, dtype=np.float32),
             'pos_x': spaces.Box(low=0, high=self.window_width, dtype=np.float32),
             'pos_y': spaces.Box(low=0, high=self.window_height, dtype=np.float32),
-            'heading': spaces.Box(low=0, high=360, dtype=np.float32),
+            'heading': spaces.Box(low=0, high=2*math.pi, dtype=np.float32),
             'speed': spaces.Box(low=self.min_speed, high=self.max_speed, dtype=np.float32),
         })
         return s
@@ -214,10 +242,9 @@ class Aircraft:
     def __init__(self, position, speed, heading):
         self.position = np.array(position, dtype=np.float32)
         self.speed = speed
-        self.heading = heading  # degree
-        self.rad = math.radians(self.heading)
-        vx = -self.speed * math.sin(self.rad)
-        vy = -self.speed * math.cos(self.rad)
+        self.heading = heading  # rad
+        vx = self.speed * math.cos(self.heading)
+        vy = self.speed * math.sin(self.heading)
         self.velocity = np.array([vx, vy], dtype=np.float32)
 
         self.conflict = False  # track if this aircraft is in conflict with ownship
@@ -226,9 +253,6 @@ class Aircraft:
 class Ownship(Aircraft):
     def __init__(self, position, speed, heading):
         Aircraft.__init__(self, position, speed, heading)
-        self.bank = 0  # degree
-        self.delta_heading = 0
-
         self.load_config()
 
     def load_config(self):
@@ -241,32 +265,20 @@ class Ownship(Aircraft):
         self.speed_sigma = Config.speed_sigma
         self.position_sigma = Config.position_sigma
 
-        self.min_bank = Config.min_bank
-        self.max_bank = Config.max_bank
-        self.d_bank = Config.d_bank
-        self.bank_sigma = Config.bank_sigma
+        self.d_heading = Config.d_heading
+        self.heading_sigma = Config.heading_sigma
 
     def step(self, a):
+        self.heading += self.d_heading * (a[0] - 1)
+        self.heading += np.random.normal(0, self.heading_sigma)
         self.speed += self.d_speed * (a[1] - 1)
         self.speed = max(self.min_speed, min(self.speed, self.max_speed))  # project to range
         self.speed += np.random.normal(0, self.speed_sigma)
-        self.bank += self.d_bank * (a[0] - 1)
-        self.bank = max(self.min_bank, min(self.bank, self.max_bank))  # clip
-        self.bank += np.random.normal(0, self.bank_sigma)
-        self.delta_heading = self.bank_to_heading(self.bank, self.speed)
-        self.heading += self.delta_heading
-        self.heading %= 360
-        self.rad = math.radians(self.heading)
-        vx = -self.speed * math.sin(self.rad)
-        vy = -self.speed * math.cos(self.rad)
+
+        vx = self.speed * math.cos(self.heading)
+        vy = self.speed * math.sin(self.heading)
         self.velocity = np.array([vx, vy])
-
         self.position += self.velocity
-
-    def bank_to_heading(self, bank, speed):
-        direction = self.G * math.tan(math.radians(bank)) / (self.scale * float(speed))
-
-        return math.degrees(direction)
 
 
 def dist(object1, object2):

@@ -1,3 +1,5 @@
+import math
+
 class Config:
     # input dim
     window_width = 800
@@ -23,8 +25,8 @@ class Config:
     position_sigma = 10/scale
 
     # heading in deg TBD
-    d_heading = 5
-    heading_sigma = 5
+    d_heading = 5/math.pi
+    heading_sigma = 5/math.pi
 
     # bank
     min_bank = -25

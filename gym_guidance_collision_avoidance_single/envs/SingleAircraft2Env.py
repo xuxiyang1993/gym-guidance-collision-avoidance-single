@@ -147,7 +147,7 @@ class SingleAircraft2Env(gym.Env):
             return -1, False, 'c'  # conflict
 
         if not self.position_range.contains(self.drone.position):
-            return -1, True, 'w'  # out-of-map
+            return -100, True, 'w'  # out-of-map
 
         if dist(self.drone, self.goal) < self.goal_radius:
             return 1, True, 'g'  # goal

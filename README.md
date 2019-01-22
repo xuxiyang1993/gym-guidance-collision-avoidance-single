@@ -38,9 +38,13 @@ python -m baselines.run --env=guidance-collision-avoidance-single-continuous-act
 ```
 
 Optional arguments:
+
 `--save_path` the path where you want to save the model
+
 `--load_path` the path where you want to load the model
+
 `--num_timesteps` total time steps the agent will be trained
+
 More optional can be found in the documentation of OpenAI baselines repository.
 
 # MCTS

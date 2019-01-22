@@ -54,7 +54,3 @@ Use Monte Carlo Tree Search Algorithm to solve this problem. Details can be foun
 ```bash
 python Agent.py
 ```
-
-(there is a module import error)
-
-`env.render()` is currently under working.

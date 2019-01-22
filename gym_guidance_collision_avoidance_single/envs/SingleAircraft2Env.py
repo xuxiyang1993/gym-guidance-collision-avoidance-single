@@ -1,8 +1,5 @@
-import numpy as np
 import math
-import os
-import pygame
-from pygame.locals import *
+import numpy as np
 import gym
 from gym import spaces
 from gym.utils import seeding

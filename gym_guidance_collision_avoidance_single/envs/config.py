@@ -25,7 +25,7 @@ class Config:
     speed_sigma = 2 / scale
     position_sigma = 10 / scale
 
-    # heading in deg TBD
+    # heading in rad TBD
     d_heading = math.radians(5)
     heading_sigma = math.radians(5)
 

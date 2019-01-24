@@ -1,6 +1,0 @@
-README.md
-gym_guidance_collision_avoidance_single.egg-info/PKG-INFO
-gym_guidance_collision_avoidance_single.egg-info/SOURCES.txt
-gym_guidance_collision_avoidance_single.egg-info/dependency_links.txt
-gym_guidance_collision_avoidance_single.egg-info/requires.txt
-gym_guidance_collision_avoidance_single.egg-info/top_level.txt

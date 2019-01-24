@@ -27,7 +27,7 @@ class Config:
 
     # heading in rad TBD
     d_heading = math.radians(5)
-    heading_sigma = math.radians(5)
+    heading_sigma = math.radians(2)
 
     # bank
     min_bank = -25

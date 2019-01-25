@@ -66,12 +66,14 @@ class SingleAircraftEnv(gym.Env):
         # intruder = recordtype('intruder', ['id', 'position', 'velocity'])
         # goal = recordtype('goal', ['position'])
 
+        # initiate ownship to control
         self.drone = Ownship(
             position=(50, 50),
             speed=self.min_speed,
             heading=math.pi/4
         )
 
+        # randomly generate intruder aircraft and store them in a list
         self.intruder_list = []
         for _ in range(self.intruder_size):
             intruder = Aircraft(
@@ -79,18 +81,24 @@ class SingleAircraftEnv(gym.Env):
                 speed=self.random_speed(),
                 heading=self.random_heading(),
             )
+            # new intruder aircraft can appear too close to ownship
             while dist(self.drone, intruder) < self.initial_min_dist:
                 intruder.position = self.random_pos()
 
             self.intruder_list.append(intruder)
 
+        # generate a random goal
         self.goal = Goal(position=self.random_pos())
 
+        # reset the number of conflicts to 0
         self.no_conflict = 0
 
         return self._get_ob()
 
     def _get_ob(self):
+        # state contains pos, vel for all intruder aircraft
+        # pos, vel, speed, heading for ownship
+        # goal pos
         s = []
         for i in range(self.intruder_size):
             # (x, y, vx, vy)
@@ -112,13 +120,14 @@ class SingleAircraftEnv(gym.Env):
         return np.array(s)
 
     def step(self, action):
-        # intruder aircraft
+        # map 0~8 to 3x3 action space
         a = np.zeros(2)
         a[0] = action // 3
         a[1] = action % 3
         action = a
         # assert self.action_space.contains(action), 'given action is in incorrect shape'
 
+        # next state of ownship
         self.drone.step(action)
 
         reward, terminal, info = self._terminal_reward()
@@ -129,15 +138,20 @@ class SingleAircraftEnv(gym.Env):
 
         # step the intruder aircraft
         conflict = False
+        # for each aircraft
         for idx in range(self.intruder_size):
             intruder = self.intruder_list[idx]
             intruder.position += intruder.velocity
             dist_intruder = dist(self.drone, intruder)
+            # if this intruder out of map
             if not self.position_range.contains(intruder.position):
                 self.intruder_list[idx] = self.reset_intruder()
 
+            # if there is a conflict
             if dist_intruder < self.minimum_separation:
                 conflict = True
+                # if conflict status transition from False to True, increase number of conflicts by 1
+                # if conflict status is True, monitor when this conflict status will be escaped
                 if intruder.conflict == False:
                     self.no_conflict += 1
                     intruder.conflict = True
@@ -145,17 +159,21 @@ class SingleAircraftEnv(gym.Env):
                     if not dist_intruder < self.minimum_separation:
                         intruder.conflict = False
 
+                # if there is a near-mid-air-collision
                 if dist_intruder < self.NMAC_dist:
-                    return -5, True, 'n'  # NMAC
+                    return -20, True, 'n'  # NMAC
 
+        # if there is conflict
         if conflict:
-            return -1, False, 'c'  # conflict
+            return -5, False, 'c'  # conflict
 
-        if not self.position_range.contains(self.drone.position):
-            return -1, True, 'w'  # out-of-map
+        # if ownship out of map
+        # if not self.position_range.contains(self.drone.position):
+        #     return -100, True, 'w'  # out-of-map
 
+        # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 1, True, 'g'  # goal
+            return 100, True, 'g'  # goal
         return -dist(self.drone, self.goal)/1200, False, ''
         return 0, False, ''
 
@@ -172,18 +190,21 @@ class SingleAircraftEnv(gym.Env):
         import os
         __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
+        # draw ownship
         ownship_img = rendering.Image(os.path.join(__location__, 'images/aircraft.png'), 32, 32)
         jtransform = rendering.Transform(rotation=self.drone.heading - math.pi/2, translation=self.drone.position)
         ownship_img.add_attr(jtransform)
         ownship_img.set_color(255, 241, 4)  # set it to yellow
         self.viewer.onetime_geoms.append(ownship_img)
 
+        # draw goal
         goal_img = rendering.Image(os.path.join(__location__, 'images/goal.png'), 32, 32)
         jtransform = rendering.Transform(rotation=0, translation=self.goal.position)
         goal_img.add_attr(jtransform)
         goal_img.set_color(15, 210, 81)  # green
         self.viewer.onetime_geoms.append(goal_img)
 
+        # draw intruders
         for aircraft in self.intruder_list:
             intruder_img = rendering.Image(os.path.join(__location__, 'images/intruder.png'), 32, 32)
             jtransform = rendering.Transform(rotation=aircraft.heading - math.pi/2, translation=aircraft.position)
@@ -198,6 +219,7 @@ class SingleAircraftEnv(gym.Env):
             self.viewer.close()
             self.viewer = None
 
+    # reset pos, vel, heading of this aircraft
     def reset_intruder(self):
         intruder = Aircraft(
             position=self.random_pos(),

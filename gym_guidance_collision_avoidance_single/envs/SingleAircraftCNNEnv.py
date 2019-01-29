@@ -124,11 +124,10 @@ class SingleAircraft3Env(gym.Env):
         a = np.zeros(2)
         a[0] = action // 3
         a[1] = action % 3
-        action = a
         # assert self.action_space.contains(action), 'given action is in incorrect shape'
 
         # next state of ownship
-        self.drone.step(action)
+        self.drone.step(a)
 
         reward, terminal, info = self._terminal_reward()
 

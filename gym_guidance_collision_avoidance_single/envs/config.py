@@ -34,3 +34,6 @@ class Config:
     max_bank = 25
     d_bank = 5
     bank_sigma = 4
+    
+    #maximum steps of one episode
+    max_steps = 1000

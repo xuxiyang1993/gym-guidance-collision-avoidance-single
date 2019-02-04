@@ -9,7 +9,7 @@ from .config import Config
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
 
-class SingleAircraftHerEnv(gym.GoalEnv):
+class SingleAircraftHEREnv(gym.GoalEnv):
     """
     This is the airspace simulator where we can control single aircraft (yellow aircraft)
     to reach the goal position (green star) while avoiding conflicts with other intruder aircraft (red aircraft).
@@ -183,6 +183,9 @@ class SingleAircraftHerEnv(gym.GoalEnv):
             return 100, True, 'g'  # goal
         return -dist(self.drone, self.goal)/1200, False, ''
         return 0, False, ''
+
+    # def compute_reward(self, achieved_goal, desired_goal, info):
+    #     return 1
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering

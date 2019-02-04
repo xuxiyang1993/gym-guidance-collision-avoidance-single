@@ -37,7 +37,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
             achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
             observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
         ))
-        self.action_space = spaces.Discrete(9)
+        self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float)
         self.position_range = spaces.Box(
             low=np.array([0, 0]),
             high=np.array([self.window_width, self.window_height]),
@@ -127,12 +127,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         }
 
     def step(self, action):
-        # map 0~8 to 3x3 action space
-        a = np.zeros(2)
-        a[0] = action // 3
-        a[1] = action % 3
-        action = a
-        # assert self.action_space.contains(action), 'given action is in incorrect shape'
+        assert self.action_space.contains(action), 'given action is in incorrect shape'
 
         # next state of ownship
         self.drone.step(action)
@@ -174,9 +169,8 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         if conflict:
             return -5, False, 'c'  # conflict
 
-        # if ownship out of map
-        # if not self.position_range.contains(self.drone.position):
-        #     return -100, True, 'w'  # out-of-map
+        if not self.position_range.contains(self.drone.position):
+            return -100, True, 'w'  # out-of-map
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
@@ -300,9 +294,9 @@ class Ownship(Aircraft):
         self.heading_sigma = Config.heading_sigma
 
     def step(self, a):
-        self.heading += self.d_heading * (a[0] - 1)
+        self.heading += self.d_heading * a[0]
         self.heading += np.random.normal(0, self.heading_sigma)
-        self.speed += self.d_speed * (a[1] - 1)
+        self.speed += self.d_speed * a[1]
         self.speed = max(self.min_speed, min(self.speed, self.max_speed))  # project to range
         self.speed += np.random.normal(0, self.speed_sigma)
 

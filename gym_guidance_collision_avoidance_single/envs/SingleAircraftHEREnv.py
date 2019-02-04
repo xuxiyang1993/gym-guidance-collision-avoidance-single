@@ -180,8 +180,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 100, True, 'g'  # goal
-        return -dist(self.drone, self.goal)/1200, False, ''
+            return 10, True, 'g'  # goal
         return 0, False, ''
 
     # def compute_reward(self, achieved_goal, desired_goal, info):

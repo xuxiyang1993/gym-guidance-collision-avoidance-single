@@ -134,7 +134,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
 
         reward, terminal, info = self._terminal_reward()
 
-        return self._get_ob(), reward, terminal, info
+        return self._get_ob(), reward, terminal, {}
 
     def _terminal_reward(self):
 

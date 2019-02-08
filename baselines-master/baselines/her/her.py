@@ -100,7 +100,7 @@ def learn(*, network, env, total_timesteps,
     override_params = override_params or {}
     if MPI is not None:
         rank = MPI.COMM_WORLD.Get_rank()
-        num_cpu = MPI.COMM_WORLD.Get_size()
+        num_cpu = 8
 
     # Seed everything.
     rank_seed = seed + 1000000 * rank if seed is not None else None

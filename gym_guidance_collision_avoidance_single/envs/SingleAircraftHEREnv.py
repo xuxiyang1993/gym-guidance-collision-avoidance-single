@@ -65,15 +65,27 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         self.goal_radius = Config.goal_radius
         self.min_speed = Config.min_speed
         self.max_speed = Config.max_speed
+        
+        self.threshold = Config.goal_radius
+        
+        self.max_steps = Config.max_steps
+        self.steps = 0
+        self.episodes = 1
+        self.total_steps = 0
 
     def reset(self):
         # ownship = recordtype('ownship', ['position', 'velocity', 'speed', 'heading', 'bank'])
         # intruder = recordtype('intruder', ['id', 'position', 'velocity'])
         # goal = recordtype('goal', ['position'])
+        print('----------------')
+        print('Episode {} starts'.format(self.episodes))
+        print('On total steps of {}'.format(self.total_steps))
+        self.steps = 0
+        self.episodes += 1
 
         # initiate ownship to control
         self.drone = Ownship(
-            position=(50, 50),
+            position=(50,50),
             speed=self.min_speed,
             heading=math.pi/4
         )
@@ -127,6 +139,10 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         }
 
     def step(self, action):
+        self.render()
+        self.steps += 1
+        self.total_steps += 1
+        
         assert self.action_space.contains(action), 'given action is in incorrect shape'
 
         # next state of ownship
@@ -137,6 +153,9 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         return self._get_ob(), reward, terminal, {}
 
     def _terminal_reward(self):
+        
+        if self.steps >= self.max_steps:
+            return -1, True, 'm'
 
         # step the intruder aircraft
         conflict = False
@@ -163,22 +182,27 @@ class SingleAircraftHEREnv(gym.GoalEnv):
 
                 # if there is a near-mid-air-collision
                 if dist_intruder < self.NMAC_dist:
-                    return -20, True, 'n'  # NMAC
+                    print('Step {}, mid-air-collision'.format(self.steps))
+                    return -5, False, 'n'  # NMAC
 
         # if there is conflict
         if conflict:
-            return -5, False, 'c'  # conflict
+            print('Step {} conflicts'.format(self.steps))
+            return -2, False, 'c'  # conflict
 
-        if not self.position_range.contains(self.drone.position):
-            return -100, True, 'w'  # out-of-map
+        #if not self.position_range.contains(self.drone.position):
+            #return -100, True, 'w'  # out-of-map
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 10, True, 'g'  # goal
-        return 0, False, ''
+            print('Step {} reached goal'.format(self.steps))
+            return 0, False, 'g'  # goal
+        return -1, False, ''
 
-    # def compute_reward(self, achieved_goal, desired_goal, info):
-    #     return 1
+    def compute_reward(self, achieved_goal, desired_goal, info):
+        assert achieved_goal.shape == desired_goal.shape
+        d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
+        return -(d > self.threshold).astype(np.float32)
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering

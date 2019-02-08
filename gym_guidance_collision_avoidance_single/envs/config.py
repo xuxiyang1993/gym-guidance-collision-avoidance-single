@@ -36,4 +36,4 @@ class Config:
     bank_sigma = 4
     
     #maximum steps of one episode
-    max_steps = 1000
+    max_steps = 600

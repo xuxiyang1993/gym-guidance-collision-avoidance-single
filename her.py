@@ -8,11 +8,13 @@ import random
 import os
 from collections import deque
 from matplotlib import pyplot as plt
-from tqdm import tqdm
 
 from gym_guidance_collision_avoidance_single.envs import SingleAircraftDiscreteHEREnv
 
 np.set_printoptions(suppress=True)
+seed = 2
+np.random.seed(2)
+random.seed(2)
 
 # # Experience replay buffer
 # class Buffer():
@@ -90,7 +92,7 @@ def get_epsilon(num_episode):
 
 def main():
     HER = True
-    size = 400
+    size = 100
     num_episodes = 1000
     optimisation_steps = 40
     K = 4
@@ -175,10 +177,12 @@ def main():
                     if HER:
                         for k in range(K):
                             future = np.random.randint(t, len(episode_experience))
-                            _, _, _, _, g_n = episode_experience[future]
-                            inputs = np.concatenate([s, g_n], axis=-1)
-                            new_inputs = np.concatenate([s_n, g_n], axis=-1)
-                            r_n = env.compute_reward(s_n[:2], g_n, _)
+                            # if future == t:
+                            #     import ipdb; ipdb.set_trace()
+                            _, _, _, g_n, _ = episode_experience[future]
+                            inputs = np.concatenate([s, g_n[:2]], axis=-1)
+                            new_inputs = np.concatenate([s_n, g_n[:2]], axis=-1)
+                            r_n = env.compute_reward(s_n[:2], g_n[:2], _)
                             buffer.append([inputs, a, r_n, new_inputs])
 
             mean_loss = []

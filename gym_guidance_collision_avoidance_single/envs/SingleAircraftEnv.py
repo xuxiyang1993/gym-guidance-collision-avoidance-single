@@ -173,7 +173,7 @@ class SingleAircraftEnv(gym.Env):
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 100, True, 'g'  # goal
+            return 10, True, 'g'  # goal
         return -dist(self.drone, self.goal)/1200, False, ''
         return 0, False, ''
 

@@ -94,7 +94,7 @@ def main():
     HER = True
     size = 100
     num_episodes = 1000
-    optimisation_steps = 40
+    optimisation_steps = 1000
     K = 4
     buffer_size = 10000
     tau = 0.95
@@ -102,11 +102,6 @@ def main():
     epsilon = 1.0
     batch_size = 64
     add_final = False
-
-    total_rewards = []
-    total_loss = []
-    success_rate = []
-    succeed = 0
 
     save_model = False
     model_dir = './train'
@@ -177,40 +172,35 @@ def main():
                     if HER:
                         for k in range(K):
                             future = np.random.randint(t, len(episode_experience))
-                            # if future == t:
-                            #     import ipdb; ipdb.set_trace()
                             _, _, _, g_n, _ = episode_experience[future]
                             inputs = np.concatenate([s, g_n[:2]], axis=-1)
                             new_inputs = np.concatenate([s_n, g_n[:2]], axis=-1)
                             r_n = env.compute_reward(s_n[:2], g_n[:2], _)
                             buffer.append([inputs, a, r_n, new_inputs])
 
-            mean_loss = []
-            for k in range(optimisation_steps):
-                if len(buffer) < 1000:
-                    break
+                mean_loss = []
+                for k in range(optimisation_steps):
+                    if len(buffer) < 1000:
+                        break
 
-                import ipdb; ipdb.set_trace()
-                experience = random.sample(buffer, batch_size)
-                s, a, r, s_next = [np.squeeze(elem, axis=1) for elem in np.split(experience, 4, 1)]
-                s = np.array([ss for ss in s])
-                s = np.reshape(s, (batch_size, size * 2))
-                s_next = np.array([ss for ss in s_next])
-                s_next = np.reshape(s_next, (batch_size, size * 2))
-                Q1 = sess.run(modelNetwork.Q_, feed_dict={modelNetwork.inputs: s_next})
-                Q2 = sess.run(targetNetwork.Q_, feed_dict={targetNetwork.inputs: s_next})
-                doubleQ = Q2[:, np.argmax(Q1, axis=-1)]
-                Q_target = np.clip(r + gamma * doubleQ, -1. / (1 - gamma), 0)
-                _, loss = sess.run([modelNetwork.train_op, modelNetwork.loss],
-                                   feed_dict={modelNetwork.inputs: s,
-                                              modelNetwork.Q_next: Q_target,
-                                              modelNetwork.action: a})
-                mean_loss.append(loss)
+                    experience = random.sample(buffer, batch_size)
+                    s = np.array([ss[0] for ss in experience])
+                    a = np.array([ss[1] for ss in experience])
+                    r = np.array([ss[2] for ss in experience])
+                    s_next = np.array([ss[3] for ss in experience])
+                    Q1 = sess.run(modelNetwork.Q_, feed_dict={modelNetwork.inputs: s_next})
+                    Q2 = sess.run(targetNetwork.Q_, feed_dict={targetNetwork.inputs: s_next})
+                    doubleQ = Q2[:, np.argmax(Q1, axis=-1)]
+                    Q_target = r + gamma * doubleQ
+                    _, loss = sess.run([modelNetwork.train_op, modelNetwork.loss],
+                                       feed_dict={modelNetwork.inputs: s,
+                                                  modelNetwork.Q_next: Q_target,
+                                                  modelNetwork.action: a})
+                    mean_loss.append(loss)
 
-            success_rate.append(np.mean(successes))
-            total_loss.append(np.mean(mean_loss))
-            updateTarget(updateOps, sess)
-            total_rewards.append(total_reward)
+                print('success rate:', np.mean(successes))
+                print('loss', np.mean(mean_loss))
+                updateTarget(updateOps, sess)
             # ax.relim()
             # ax.autoscale_view()
             # ax2.relim()
@@ -225,7 +215,6 @@ def main():
             if save_model:
                 saver = tf.train.Saver()
                 saver.save(sess, os.path.join(model_dir, 'model.ckpt'))
-        print('Number of episodes succeeded: {}'.format(succeed))
         input('Press enter...')
 
 

@@ -17,7 +17,7 @@ np.random.seed(2)
 random.seed(2)
 
 
-# Simple 1 layer feed forward neural network
+# feed forward neural network
 class Model:
     def __init__(self, input, name):
         with tf.variable_scope(name):
@@ -121,7 +121,7 @@ def main():
             for n in range(num_episodes):
                 episode_reward = 0
                 last_ob = env.reset()
-                episode_experience = []
+                episode_experience = []  # experiences from this one episode
                 episode_succeeded = False
                 for t in range(size):
                     s = np.copy(last_ob['observation'])
@@ -151,7 +151,9 @@ def main():
                     inputs = np.concatenate([s, g], axis=-1)
                     new_inputs = np.concatenate([s_n, g], axis=-1)
                     buffer.append([inputs, a, r, new_inputs])  # reward == 1 means terminal
+                    # above is standard experience replay
                     if HER:
+                        # use future HER strategy, randomly sample a future visited state as goal
                         for k in range(K):
                             future = np.random.randint(t, len(episode_experience))
                             _, _, _, g_n, _ = episode_experience[future]
@@ -161,6 +163,7 @@ def main():
                             buffer.append([inputs, a, r_n, new_inputs])
 
                 mean_loss = []
+                # train network
                 for k in range(optimisation_steps):
                     if len(buffer) < 1000:
                         break

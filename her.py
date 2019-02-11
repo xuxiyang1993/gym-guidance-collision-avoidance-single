@@ -10,6 +10,7 @@ from collections import deque
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
+from gym_guidance_collision_avoidance_single.envs import SingleAircraftHEREnv
 
 # # Experience replay buffer
 # class Buffer():
@@ -35,10 +36,14 @@ class Model:
     def __init__(self, input, name):
         with tf.variable_scope(name):
             self.inputs = tf.placeholder(shape=[None, input + 2], dtype=tf.float32)
-            init = tf.contrib.layers.variance_scaling_initializer(factor=1.0, mode="FAN_AVG", uniform=False)
-            self.hidden1 = fully_connected_layer(self.inputs, 256, activation=tf.nn.relu, init=init, scope='fc1')
-            self.hidden2 = fully_connected_layer(self.hidden1, 256, activation=tf.nn.relu, init=init, scope='fc2')
-            self.Q_ = fully_connected_layer(self.hidden2, 3, activation=None, scope="Q", bias=False)
+            init = tf.contrib.layers.variance_scaling_initializer(factor=1.0,
+                                                                  mode='FAN_AVG',
+                                                                  uniform=False)
+            self.hidden1 = fully_connected_layer(self.inputs, 256,
+                                                 activation=tf.nn.relu, init=init, scope='fc1')
+            self.hidden2 = fully_connected_layer(self.hidden1, 256,
+                                                 activation=tf.nn.relu, init=init, scope='fc2')
+            self.Q_ = fully_connected_layer(self.hidden2, 3, activation=None, scope='Q', bias=False)
             self.predict = tf.argmax(self.Q_, axis=-1)
             self.action = tf.placeholder(shape=None, dtype=tf.int32)
             self.action_onehot = tf.one_hot(self.action, 3, dtype=tf.float32)
@@ -79,14 +84,13 @@ def updateTarget(op_holder, sess):
 
 def main():
     HER = True
-    shaped_reward = False
     size = 400
     num_epochs = 1
     num_cycles = 1
     num_episodes = 1000
     optimisation_steps = 40
     K = 4
-    buffer_size = 10^6
+    buffer_size = 10 ^ 6
     tau = 0.95
     gamma = 0.99
     epsilon = 1.0
@@ -99,7 +103,7 @@ def main():
     succeed = 0
 
     save_model = False
-    model_dir = "./train"
+    model_dir = './train'
     train = True
 
     if not os.path.isdir(model_dir):
@@ -112,16 +116,16 @@ def main():
     targetNetwork = Model(input=state_dim, name='target')
     trainables = tf.trainable_variables()
     updateOps = updateTargetGraph(trainables, tau)
-    buff = deque(maxlen=buffer_size)
+    buffer = deque(maxlen=buffer_size)
 
     if train:
         plt.ion()
         fig = plt.figure()
         ax = fig.add_subplot(211)
-        plt.title("Success Rate")
+        plt.title('Success Rate')
         ax.set_ylim([0, 1.])
         ax2 = fig.add_subplot(212)
-        plt.title("Q Loss")
+        plt.title('Q Loss')
         line = ax.plot(np.zeros(1), np.zeros(1), 'b-')[0]
         line2 = ax2.plot(np.zeros(1), np.zeros(1), 'b-')[0]
         fig.canvas.draw()
@@ -140,25 +144,24 @@ def main():
                             s = np.copy(last_ob['observation'])
                             g = np.copy(last_ob['desired_goal'])
                             inputs = np.concatenate([s, g], axis=-1)
-                            action = sess.run(modelNetwork.predict, feed_dict={modelNetwork.inputs: [inputs]})
-                            action = action[0]
                             if np.random.rand(1) < epsilon:
                                 action = np.random.randint(size)
+                            else:
+                                action = sess.run(modelNetwork.predict,
+                                                  feed_dict={modelNetwork.inputs: [inputs]})
+                                action = action[0]
                             s_next, reward, done, _ = env.step(action)
                             episode_experience.append((s, action, reward, s_next, g))
                             total_reward += reward
-                            if reward == 0:
-                                if episode_succeeded:
-                                    continue
-                                else:
-                                    episode_succeeded = True
-                                    succeed += 1
+                            if reward == 1:
+                                episode_succeeded = True
+                                break
                         successes.append(episode_succeeded)
                         for t in range(len(episode_experience)):
                             s, a, r, s_n, g = episode_experience[t]
                             inputs = np.concatenate([s, g], axis=-1)
                             new_inputs = np.concatenate([s_n, g], axis=-1)
-                            buff.append(np.reshape(np.array([inputs, a, r, new_inputs]), [1, 4]))
+                            buffer.append([inputs, a, r, new_inputs])  # reward == 1 means terminal
                             if HER:
                                 for k in range(K):
                                     future = np.random.randint(t, len(episode_experience))
@@ -166,11 +169,11 @@ def main():
                                     inputs = np.concatenate([s, g_n], axis=-1)
                                     new_inputs = np.concatenate([s_n, g_n], axis=-1)
                                     r_n = env.compute_reward(s_n, g_n)
-                                    buff.append(np.reshape(np.array([inputs, a, r_n, new_inputs]), [1, 4]))
+                                    buffer.append([inputs, a, r_n, new_inputs])
 
                     mean_loss = []
                     for k in range(optimisation_steps):
-                        experience = random.sample(buff, batch_size)
+                        experience = random.sample(buffer, batch_size)
                         s, a, r, s_next = [np.squeeze(elem, axis=1) for elem in np.split(experience, 4, 1)]
                         s = np.array([ss for ss in s])
                         s = np.reshape(s, (batch_size, size * 2))
@@ -181,7 +184,8 @@ def main():
                         doubleQ = Q2[:, np.argmax(Q1, axis=-1)]
                         Q_target = np.clip(r + gamma * doubleQ, -1. / (1 - gamma), 0)
                         _, loss = sess.run([modelNetwork.train_op, modelNetwork.loss],
-                                           feed_dict={modelNetwork.inputs: s, modelNetwork.Q_next: Q_target,
+                                           feed_dict={modelNetwork.inputs: s,
+                                                      modelNetwork.Q_next: Q_target,
                                                       modelNetwork.action: a})
                         mean_loss.append(loss)
 
@@ -201,16 +205,16 @@ def main():
                     plt.pause(1e-7)
             if save_model:
                 saver = tf.train.Saver()
-                saver.save(sess, os.path.join(model_dir, "model.ckpt"))
-        print("Number of episodes succeeded: {}".format(succeed))
-        input("Press enter...")
+                saver.save(sess, os.path.join(model_dir, 'model.ckpt'))
+        print('Number of episodes succeeded: {}'.format(succeed))
+        input('Press enter...')
     with tf.Session() as sess:
         saver = tf.train.Saver()
-        saver.restore(sess, os.path.join(model_dir, "model.ckpt"))
+        saver.restore(sess, os.path.join(model_dir, 'model.ckpt'))
         while True:
             env.reset()
-            print("Initial State:\t{}".format(env.state))
-            print("Goal:\t{}".format(env.target))
+            print('Initial State:\t{}'.format(env.state))
+            print('Goal:\t{}'.format(env.target))
             for t in range(size):
                 s = np.copy(env.state)
                 g = np.copy(env.target)
@@ -218,12 +222,12 @@ def main():
                 action = sess.run(targetNetwork.predict, feed_dict={targetNetwork.inputs: [inputs]})
                 action = action[0]
                 s_next, reward = env.step(action)
-                print("State at step {}: {}".format(t, env.state))
+                print('State at step {}: {}'.format(t, env.state))
                 if reward == 0:
-                    print("Success!")
+                    print('Success!')
                     break
-            raw_input("Press enter...")
+            input('Press enter...')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

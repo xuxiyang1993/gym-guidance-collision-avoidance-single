@@ -105,11 +105,13 @@ def main():
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
 
-    modelNetwork = Model(input=46, name='model')
-    targetNetwork = Model(input=46, name='target')
+    env = gym.make('guidance-collision-avoidance-single-HER-v0')
+    state_dim = env.observation_space.spaces['observation'].shape[0]
+    goal_dim = 2
+    modelNetwork = Model(input=state_dim, name='model')
+    targetNetwork = Model(input=state_dim, name='target')
     trainables = tf.trainable_variables()
     updateOps = updateTargetGraph(trainables, tau)
-    env = gym.make('guidance-collision-avoidance-single-HER-v0')
     buff = deque(maxlen=buffer_size)
 
     if train:
@@ -131,18 +133,18 @@ def main():
                     total_reward = 0.0
                     successes = []
                     for n in range(num_episodes):
-                        env.reset()
+                        last_ob = env.reset()
                         episode_experience = []
                         episode_succeeded = False
                         for t in range(size):
-                            s = np.copy(env.state)
-                            g = np.copy(env.target)
+                            s = np.copy(last_ob['observation'])
+                            g = np.copy(last_ob['desired_goal'])
                             inputs = np.concatenate([s, g], axis=-1)
                             action = sess.run(modelNetwork.predict, feed_dict={modelNetwork.inputs: [inputs]})
                             action = action[0]
                             if np.random.rand(1) < epsilon:
                                 action = np.random.randint(size)
-                            s_next, reward = env.step(action)
+                            s_next, reward, done, _ = env.step(action)
                             episode_experience.append((s, action, reward, s_next, g))
                             total_reward += reward
                             if reward == 0:
@@ -152,31 +154,23 @@ def main():
                                     episode_succeeded = True
                                     succeed += 1
                         successes.append(episode_succeeded)
-                        for t in range(size):
+                        for t in range(len(episode_experience)):
                             s, a, r, s_n, g = episode_experience[t]
                             inputs = np.concatenate([s, g], axis=-1)
                             new_inputs = np.concatenate([s_n, g], axis=-1)
-                            buff.add(np.reshape(np.array([inputs, a, r, new_inputs]), [1, 4]))
+                            buff.append(np.reshape(np.array([inputs, a, r, new_inputs]), [1, 4]))
                             if HER:
                                 for k in range(K):
-                                    future = np.random.randint(t, size)
+                                    future = np.random.randint(t, len(episode_experience))
                                     _, _, _, g_n, _ = episode_experience[future]
                                     inputs = np.concatenate([s, g_n], axis=-1)
                                     new_inputs = np.concatenate([s_n, g_n], axis=-1)
-                                    final = np.sum(np.array(s_n) == np.array(g_n)) == size
-                                    if shaped_reward:
-                                        r_n = 0 if final else -np.sum(np.square(np.array(s_n) == np.array(g_n)))
-                                    else:
-                                        r_n = 0 if final else -1
-                                    buff.add(np.reshape(np.array([inputs, a, r_n, new_inputs]), [1, 4]))
-
-                        print(episode_experience)
-                        print('---')
-                        print(buff.buffer)
+                                    r_n = env.compute_reward(s_n, g_n)
+                                    buff.append(np.reshape(np.array([inputs, a, r_n, new_inputs]), [1, 4]))
 
                     mean_loss = []
                     for k in range(optimisation_steps):
-                        experience = buff.sample(batch_size)
+                        experience = random.sample(buff, batch_size)
                         s, a, r, s_next = [np.squeeze(elem, axis=1) for elem in np.split(experience, 4, 1)]
                         s = np.array([ss for ss in s])
                         s = np.reshape(s, (batch_size, size * 2))
@@ -209,7 +203,7 @@ def main():
                 saver = tf.train.Saver()
                 saver.save(sess, os.path.join(model_dir, "model.ckpt"))
         print("Number of episodes succeeded: {}".format(succeed))
-        raw_input("Press enter...")
+        input("Press enter...")
     with tf.Session() as sess:
         saver = tf.train.Saver()
         saver.restore(sess, os.path.join(model_dir, "model.ckpt"))

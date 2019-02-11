@@ -3,71 +3,45 @@
 
 import tensorflow as tf
 import numpy as np
+import gym
 import random
 import os
-
+from collections import deque
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 
-# Bit flipping environment
-class Env:
-    def __init__(self, size=8, shaped_reward=False):
-        self.size = size
-        self.shaped_reward = shaped_reward
-        self.state = np.random.randint(2, size=size)
-        self.target = np.random.randint(2, size=size)
-        while np.sum(self.state == self.target) == size:
-            self.target = np.random.randint(2, size=size)
-
-    def step(self, action):
-        self.state[action] = 1 - self.state[action]
-        if self.shaped_reward:
-            return np.copy(self.state), -np.sum(np.square(self.state - self.target))
-        else:
-            if not np.sum(self.state == self.target) == self.size:
-                return np.copy(self.state), -1
-            else:
-                return np.copy(self.state), 0
-
-    def reset(self, size=None):
-        if size is None:
-            size = self.size
-        self.state = np.random.randint(2, size=size)
-        self.target = np.random.randint(2, size=size)
-
-
-# Experience replay buffer
-class Buffer():
-    def __init__(self, buffer_size=50000):
-        self.buffer = []
-        self.buffer_size = buffer_size
-
-    def add(self, experience):
-        self.buffer.append(experience)
-        if len(self.buffer) > self.buffer_size:
-            self.buffer = self.buffer[int(0.0001 * self.buffer_size):]
-
-    def sample(self, size):
-        if len(self.buffer) >= size:
-            experience_buffer = self.buffer
-        else:
-            experience_buffer = self.buffer * size
-        return np.copy(np.reshape(np.array(random.sample(experience_buffer, size)), [size, 4]))
-
+# # Experience replay buffer
+# class Buffer():
+#     def __init__(self, buffer_size=50000):
+#         self.buffer = []
+#         self.buffer_size = buffer_size
+#
+#     def add(self, experience):
+#         self.buffer.append(experience)
+#         if len(self.buffer) > self.buffer_size:
+#             self.buffer = self.buffer[int(0.0001 * self.buffer_size):]
+#
+#     def sample(self, size):
+#         if len(self.buffer) >= size:
+#             experience_buffer = self.buffer
+#         else:
+#             experience_buffer = self.buffer * size
+#         return np.copy(np.reshape(np.array(random.sample(experience_buffer, size)), [size, 4]))
+#
 
 # Simple 1 layer feed forward neural network
-class Model():
-    def __init__(self, size, name):
+class Model:
+    def __init__(self, input, name):
         with tf.variable_scope(name):
-            self.size = size
-            self.inputs = tf.placeholder(shape=[None, self.size * 2], dtype=tf.float32)
+            self.inputs = tf.placeholder(shape=[None, input + 2], dtype=tf.float32)
             init = tf.contrib.layers.variance_scaling_initializer(factor=1.0, mode="FAN_AVG", uniform=False)
-            self.hidden = fully_connected_layer(self.inputs, 256, activation=tf.nn.relu, init=init, scope="fc")
-            self.Q_ = fully_connected_layer(self.hidden, self.size, activation=None, scope="Q", bias=False)
+            self.hidden1 = fully_connected_layer(self.inputs, 256, activation=tf.nn.relu, init=init, scope='fc1')
+            self.hidden2 = fully_connected_layer(self.hidden1, 256, activation=tf.nn.relu, init=init, scope='fc2')
+            self.Q_ = fully_connected_layer(self.hidden2, 3, activation=None, scope="Q", bias=False)
             self.predict = tf.argmax(self.Q_, axis=-1)
             self.action = tf.placeholder(shape=None, dtype=tf.int32)
-            self.action_onehot = tf.one_hot(self.action, self.size, dtype=tf.float32)
+            self.action_onehot = tf.one_hot(self.action, 3, dtype=tf.float32)
             self.Q = tf.reduce_sum(tf.multiply(self.Q_, self.action_onehot), axis=1)
             self.Q_next = tf.placeholder(shape=None, dtype=tf.float32)
             self.loss = tf.reduce_sum(tf.square(self.Q_next - self.Q))
@@ -76,13 +50,13 @@ class Model():
             self.init_op = tf.global_variables_initializer()
 
 
-def fully_connected_layer(inputs, dim, activation=None, scope="fc", reuse=None,
+def fully_connected_layer(inputs, dim, activation=None, scope='fc', reuse=None,
                           init=tf.contrib.layers.xavier_initializer(), bias=True):
     with tf.variable_scope(scope, reuse=reuse):
-        w_ = tf.get_variable("W_", [inputs.shape[-1], dim], initializer=init)
+        w_ = tf.get_variable(scope + '_W', [inputs.shape[-1], dim], initializer=init)
         outputs = tf.matmul(inputs, w_)
         if bias:
-            b = tf.get_variable("b_", dim, initializer=tf.zeros_initializer())
+            b = tf.get_variable(scope + '_b', dim, initializer=tf.zeros_initializer())
             outputs += b
         if activation is not None:
             outputs = activation(outputs)
@@ -106,17 +80,17 @@ def updateTarget(op_holder, sess):
 def main():
     HER = True
     shaped_reward = False
-    size = 15
+    size = 400
     num_epochs = 1
     num_cycles = 1
-    num_episodes = 16
+    num_episodes = 1000
     optimisation_steps = 40
     K = 4
-    buffer_size = 1e6
+    buffer_size = 10^6
     tau = 0.95
-    gamma = 0.98
-    epsilon = 0.0
-    batch_size = 128
+    gamma = 0.99
+    epsilon = 1.0
+    batch_size = 64
     add_final = False
 
     total_rewards = []
@@ -124,19 +98,19 @@ def main():
     success_rate = []
     succeed = 0
 
-    save_model = True
+    save_model = False
     model_dir = "./train"
     train = True
 
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
 
-    modelNetwork = Model(size=size, name="model")
-    targetNetwork = Model(size=size, name="target")
+    modelNetwork = Model(input=46, name='model')
+    targetNetwork = Model(input=46, name='target')
     trainables = tf.trainable_variables()
     updateOps = updateTargetGraph(trainables, tau)
-    env = Env(size=size, shaped_reward=shaped_reward)
-    buff = Buffer(buffer_size)
+    env = gym.make('guidance-collision-avoidance-single-HER-v0')
+    buff = deque(maxlen=buffer_size)
 
     if train:
         plt.ion()
@@ -195,6 +169,10 @@ def main():
                                     else:
                                         r_n = 0 if final else -1
                                     buff.add(np.reshape(np.array([inputs, a, r_n, new_inputs]), [1, 4]))
+
+                        print(episode_experience)
+                        print('---')
+                        print(buff.buffer)
 
                     mean_loss = []
                     for k in range(optimisation_steps):

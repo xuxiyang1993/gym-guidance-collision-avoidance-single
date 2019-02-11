@@ -34,3 +34,11 @@ register(
     reward_threshold=10.0,
     nondeterministic=False,
 )
+
+register(
+    id='guidance-collision-avoidance-single-Discrete-HER-v0',
+    entry_point='gym_guidance_collision_avoidance_single.envs:SingleAircraftDiscreteHEREnv',
+    timestep_limit=10000,
+    reward_threshold=10.0,
+    nondeterministic=False,
+)

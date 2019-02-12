@@ -4,16 +4,32 @@ Reference:  https://www.researchgate.net/publication/327174624_Autonomous_On-Dem
 
 # gym-guidance-collision-avoidance-single
 
-Control a single aircraft to reach the goal position while avoiding conflicts with other intruder aircraft.
-This repository contrains two environments.
+Control a single aircraft (yellow aircraft) to reach the goal position (green star) while avoiding conflicts with other intruder aircraft (red aircraft).
 
-## Guidance and Collision Avoidance with discrete action space
-For this env, the action is to take -1, 0, 1 for change of heading and -1, 0, 1 for the throttle.
+Parameter of the environments can be found in `config.py`.
 
-## Guidance and Collision Avoidance with continuous action space
-For this env, the action is continuous with range -1 to 1 for both the change of heading and throttle.
+## SingleAircraftEnv
+The action space is discrete: -1, 0, 1 for change of heading and -1, 0, 1 for the throttle.
 
-Parameter of the above two environments can be found in `config.py`.
+## SingleAircraft2Env
+The action space is continuous: [-1, 1] for change of heading and [-1, 1] for the throttle.
+
+## SingleAircraftStackEnv
+The input state is the whole image of the map, with four most recent frames stacked together. Action space is discrete.
+
+## SingleAircraftHEREnv
+The environment designed to implement Hindsight Experience Replay algorithm. The observation space is of the following form:
+```
+OrderedDict([('achieved_goal', Box),
+             ('desired_goal', Box),
+             ('observation', Box)])
+```
+
+The action space is continuous.
+
+## SingleAircraftDiscreteHEREnv
+The environment designed to implement Hindsight Experience Replay algorithm with discrete action space.
+
 
 ## Installation
 

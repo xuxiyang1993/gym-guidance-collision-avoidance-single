@@ -8,6 +8,8 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 BUFFER_SIZE = int(1e5)
 BATCH_SIZE = 64
 GAMMA = 0.99
@@ -23,9 +25,9 @@ class Agent():
         self.action_size = action_size
         
         # double network
-        self.local = QNetwork(state_size, action_size).cuda()
-        # cuda() move the model to GPU
-        self.target = QNetwork(state_size, action_size).cuda()
+        self.local = QNetwork(state_size, action_size).to(device)
+        # move model to either gpu or cpu
+        self.target = QNetwork(state_size, action_size).to(device)
         self.optimizer = optim.Adam(self.local.parameters(), lr=LEARNING_RATE)
         
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE)
@@ -44,7 +46,7 @@ class Agent():
                 
     def act(self, state, epsilon=0.):
         '''Choose an action given state using epsilon-greedy'''
-        state = torch.from_numpy(state).float().unsqueeze(0).cuda()
+        state = torch.from_numpy(state).float().unsqueeze(0).to(device)
         self.local.eval() # change model to evaluation mode (turn off dropout)
         with torch.no_grad(): # turn off gradient descent since evaluating
             q_value = self.local(state)
@@ -102,11 +104,11 @@ class ReplayBuffer():
         
         # restack the list of experience into batch form
         # np.vstack stacks lists verticallly
-        states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().cuda()
-        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long().cuda()
-        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().cuda()
-        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().cuda()
-        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().cuda()
+        states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
+        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long().to(device)
+        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
+        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
+        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
         
         return (states, actions, rewards, next_states, dones)
         

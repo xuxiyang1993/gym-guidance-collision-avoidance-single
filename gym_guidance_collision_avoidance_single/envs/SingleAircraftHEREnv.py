@@ -104,23 +104,25 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         # state contains pos, vel for all intruder aircraft
         # pos, vel, speed, heading for ownship
         # goal pos
+        def normalize_velocity(velocity):
+            translation = velocity + self.max_speed
+            return translation / (self.max_speed * 2)
+
         s = []
-        for i in range(self.intruder_size):
+        for aircraft in self.intruder_list:
             # (x, y, vx, vy)
-            s.append(self.intruder_list[i].position[0] / Config.window_width)
-            s.append(self.intruder_list[i].position[1] / Config.window_height)
-            s.append(self.intruder_list[i].velocity[0] / Config.max_speed)
-            s.append(self.intruder_list[i].velocity[1] / Config.max_speed)
+            s.append(aircraft.position[0] / Config.window_width)
+            s.append(aircraft.position[1] / Config.window_height)
+            s.append(normalize_velocity(aircraft.velocity[0]))
+            s.append(normalize_velocity(aircraft.velocity[1]))
         for i in range(1):
             # (x, y, vx, vy, speed, heading)
             s.append(self.drone.position[0] / Config.window_width)
             s.append(self.drone.position[1] / Config.window_height)
-            s.append(self.drone.velocity[0] / Config.max_speed)
-            s.append(self.drone.velocity[1] / Config.max_speed)
+            s.append(normalize_velocity(self.drone.velocity[0]))
+            s.append(normalize_velocity(self.drone.velocity[1]))
             s.append((self.drone.speed - Config.min_speed) / (Config.max_speed - Config.min_speed))
             s.append(self.drone.heading / (2 * math.pi))
-        s.append(self.goal.position[0] / Config.window_width)
-        s.append(self.goal.position[1] / Config.window_height)
 
         return {
             'observation': np.array(s),

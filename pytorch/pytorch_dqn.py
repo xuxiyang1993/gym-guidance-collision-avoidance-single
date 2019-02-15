@@ -11,7 +11,7 @@ env = SingleAircraftEnv()
 agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n)
 state = env.reset()
 
-def train(n_episodes=15000, eps_start=1.0, eps_end=0.01, decay=0.995):
+def train(n_episodes=15000, eps_start=1.0, eps_end=0.01, decay=0.999):
     # training loop
     total_rewards = []
     reward_window = deque(maxlen=100)
@@ -23,6 +23,7 @@ def train(n_episodes=15000, eps_start=1.0, eps_end=0.01, decay=0.995):
         total_reward = 0
         done = False
         while not done:
+            # env.render()
             episode_timestep += 1
             action = agent.act(state, epsilon)
             next_state, reward, done, _ = env.step(action)

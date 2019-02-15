@@ -172,8 +172,8 @@ class SingleAircraftEnv(gym.Env):
             return -5, False, 'c'  # conflict
 
         # if ownship out of map
-        if not self.position_range.contains(self.drone.position):
-            return -1, True, 'w'  # out-of-map
+        # if not self.position_range.contains(self.drone.position):
+        #     return -1, True, 'w'  # out-of-map
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:

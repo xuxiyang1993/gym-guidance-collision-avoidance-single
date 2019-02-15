@@ -3,11 +3,11 @@ import numpy as np
 import random
 from collections import deque
 import matplotlib.pyplot as plt
-from SingleAircraftEnv import SingleAircraftEnv
+from SingleAircraftRandomEnv import SingleAircraftRandomEnv
 from agent import Agent
 
 
-env = SingleAircraftEnv()
+env = SingleAircraftRandomEnv()
 agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n)
 state = env.reset()
 

@@ -9,7 +9,7 @@ from config import Config
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
 
-class SingleAircraftRandomIniEnv(gym.Env):
+class SingleAircraftRandomEnv(gym.Env):
     """
     This is the airspace simulator where we can control single aircraft (yellow aircraft)
     to reach the goal position (green star) while avoiding conflicts with other intruder aircraft (red aircraft).

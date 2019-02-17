@@ -5,7 +5,7 @@ class Config:
     # input dim
     window_width = 800
     window_height = 800
-    intruder_size = 20
+    intruder_size = 0
     EPISODES = 1000
     G = 9.8
     tick = 30

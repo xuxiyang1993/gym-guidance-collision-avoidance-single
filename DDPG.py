@@ -314,7 +314,9 @@ for i in range(MAX_EPISODES):
                 inputs = np.concatenate([s, g_n[:2]], axis=-1)
                 new_inputs = np.concatenate([s_n, g_n[:2]], axis=-1)
                 r_n = env.compute_reward(s_n[:2], g_n[:2], _)
-                M.store_transition(inputs, a, r, new_inputs, done)
+                M.store_transition(inputs, a, r, new_inputs, r_n == 1)
+
+    print('Training Episode', i)
 
 for i in range(10):
     last_ob = env.reset()

@@ -1,10 +1,12 @@
 import math
+import numpy as np
 import gym
 from gym import spaces
 from gym.utils import seeding
 
 from config import Config
 
+__author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
 
 class SingleAircraftHEREnv(gym.GoalEnv):

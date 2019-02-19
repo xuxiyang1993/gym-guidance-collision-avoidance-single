@@ -316,4 +316,17 @@ for i in range(MAX_EPISODES):
                 r_n = env.compute_reward(s_n[:2], g_n[:2], _)
                 M.store_transition(inputs, a, r, new_inputs, done)
 
+for i in range(10):
+    last_ob = env.reset()
+    done = False
+    while not done:
+        env.render()
+
+        s = np.copy(last_ob['observation'])
+        g = np.copy(last_ob['desired_goal'])
+        inputs = np.concatenate([s, g], axis=-1)
+        a = actor.choose_action(inputs)
+        ob, r, done, info = env.step(a)
+        last_ob = ob
+
 print('Running time: ', time.time() - t1)

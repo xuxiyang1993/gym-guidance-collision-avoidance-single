@@ -318,10 +318,11 @@ for i in range(MAX_EPISODES):
 
     print('Training Episode', i)
 
-for i in range(10):
+for i in range(100):
     last_ob = env.reset()
     done = False
-    while not done:
+    time_step = 0
+    while not done and time_step < 1000:
         env.render()
 
         s = np.copy(last_ob['observation'])
@@ -330,5 +331,6 @@ for i in range(10):
         a = actor.choose_action(inputs)
         ob, r, done, info = env.step(a)
         last_ob = ob
+        time_step += 1
 
 print('Running time: ', time.time() - t1)

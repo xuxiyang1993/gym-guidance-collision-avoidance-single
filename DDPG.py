@@ -34,7 +34,7 @@ REPLACEMENT = [
 MEMORY_CAPACITY = 100000
 BATCH_SIZE = 32
 
-HER = False
+HER = True
 K = 4
 
 RENDER = False
@@ -310,7 +310,7 @@ for i in range(MAX_EPISODES):
         if HER:
             for k in range(K):
                 future = np.random.randint(t, len(episode_experience))
-                _, _, _, g_n, _ = episode_experience[future]
+                _, _, _, g_n, _, _ = episode_experience[future]
                 inputs = np.concatenate([s, g_n[:2]], axis=-1)
                 new_inputs = np.concatenate([s_n, g_n[:2]], axis=-1)
                 r_n = env.compute_reward(s_n[:2], g_n[:2], _)

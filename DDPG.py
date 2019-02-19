@@ -15,7 +15,7 @@ import numpy as np
 import gym
 import time
 
-from gym_guidance_collision_avoidance_single.envs import SingleAircraft2Env
+from gym_guidance_collision_avoidance_single.envs import SingleAircraftHEREnv
 
 np.random.seed(1)
 tf.set_random_seed(1)
@@ -23,7 +23,7 @@ tf.set_random_seed(1)
 #####################  hyper parameters  ####################
 
 MAX_EPISODES = 200
-MAX_EP_STEPS = 200
+MAX_EP_STEPS = 1000
 LR_A = 0.001  # learning rate for actor
 LR_C = 0.001  # learning rate for critic
 GAMMA = 0.95  # reward discount
@@ -35,6 +35,7 @@ MEMORY_CAPACITY = 100000
 BATCH_SIZE = 32
 
 HER = False
+K = 4
 
 RENDER = False
 OUTPUT_GRAPH = True
@@ -254,8 +255,9 @@ if OUTPUT_GRAPH:
 var = 3  # control exploration
 
 t1 = time.time()
+successes = []
 for i in range(MAX_EPISODES):
-    s = env.reset()
+    last_ob = env.reset()
     ep_reward = 0
     episode_experience = []
     episode_succeeded = False
@@ -265,13 +267,25 @@ for i in range(MAX_EPISODES):
         if RENDER:
             env.render()
 
-        # Add exploration noise
-        a = actor.choose_action(s)
+        s = np.copy(last_ob['observation'])
+        g = np.copy(last_ob['desired_goal'])
+        inputs = np.concatenate([s, g], axis=-1)
+        a = actor.choose_action(inputs)
         # add randomness to action selection for exploration
         a = np.clip(np.random.normal(a, var), env.action_space.low, env.action_space.high)
-        s_, r, done, info = env.step(a)
+        ob, r, done, info = env.step(a)
+        s_ = ob['observation']
+        episode_experience.append([s, a, r, s_, g, done])
 
-        episode_experience.append([s, a, r, s_, ])
+        last_ob = ob
+        ep_reward += r
+        if r == 1:
+            episode_succeeded = True
+            break
+        if done:
+            break
+
+        successes.append(episode_succeeded)
 
         if M.pointer > MEMORY_CAPACITY:
             var *= .9995  # decay the action randomness
@@ -285,13 +299,20 @@ for i in range(MAX_EPISODES):
             critic.learn(b_s, b_a, b_r, b_s_, done)
             actor.learn(b_s)
 
-        s = s_
-        ep_reward += r
-
-        if t == MAX_EP_STEPS - 1:
-            print('Episode:', i, ' Reward: %i' % int(ep_reward), 'Explore: %.2f' % var, )
-            if ep_reward > -300:
-                RENDER = True
-            break
+    # store the episode experience to replay buffer M
+    for t in range(len(episode_experience)):
+        s, a, r, s_n, g, done = episode_experience[t]
+        inputs = np.concatenate([s, g], axis=-1)
+        new_inputs = np.concatenate([s_n, g], axis=-1)
+        M.store_transition(inputs, a, r, new_inputs, done)
+        # above is standard Exp Replay
+        if HER:
+            for k in range(K):
+                future = np.random.randint(t, len(episode_experience))
+                _, _, _, g_n, _ = episode_experience[future]
+                inputs = np.concatenate([s, g_n[:2]], axis=-1)
+                new_inputs = np.concatenate([s_n, g_n[:2]], axis=-1)
+                r_n = env.compute_reward(s_n[:2], g_n[:2], _)
+                M.store_transition(inputs, a, r, new_inputs, done)
 
 print('Running time: ', time.time() - t1)

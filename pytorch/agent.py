@@ -33,8 +33,8 @@ class Agent():
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE)
         self.time_step = 0
         
-    def step(self, state, action, reward, next_state, done):
-        self.memory.add(state, action, reward, next_state, done)
+    def step(self):
+        # self.memory.add(state, action, reward, next_state, done)
         
         # Learn every UPDATE_EVERY time steps.
         self.time_step = (self.time_step + 1) % UPDATE_EVERY
@@ -47,7 +47,7 @@ class Agent():
     def act(self, state, epsilon=0.):
         '''Choose an action given state using epsilon-greedy'''
         state = torch.from_numpy(state).float().unsqueeze(0).to(device)
-        self.local.eval() # change model to evaluation mode (turn off dropout)
+        self.local.eval() # change model to evaluation mode
         with torch.no_grad(): # turn off gradient descent since evaluating
             q_value = self.local(state)
         self.local.train() # back to train mode
@@ -83,6 +83,28 @@ class Agent():
             target_param.data.copy_(tau*local_param.data + (1.0-tau)*target_param.data)
         
         
+    def add(self, episode_experience, env):
+        '''
+        HER add experience after episodes terminates
+        '''
+        for t in range(len(episode_experience)):
+            s, a, r, s_n, g, done = episode_experience[t]
+            inputs = np.concatenate([s, g], axis=-1)
+            new_inputs = np.concatenate([s_n, g], axis=-1)
+            self.memory.add(inputs, a, r, new_inputs, done)
+            
+            for k in range(4):
+                future = np.random.randint(t, len(episode_experience))
+                _, _, _, g_n, _, _ = episode_experience[future]
+                inputs = np.concatenate([s, g_n[:2]], axis = -1)
+                new_inputs = np.concatenate([s_n, g_n[:2]], axis=-1)
+                r_n = env.compute_reward(s_n[:2], g_n[:2], _)
+                if r_n == 1:
+                    done = True
+                else:
+                    done = False
+                self.memory.add(inputs, a, r_n, new_inputs, done)
+                
 class ReplayBuffer():
     '''Buffer stores experience'''
     

@@ -109,12 +109,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
             return translation / (self.max_speed * 2)
 
         s = []
-        for aircraft in self.intruder_list:
-            # (x, y, vx, vy)
-            s.append(aircraft.position[0] / Config.window_width)
-            s.append(aircraft.position[1] / Config.window_height)
-            s.append(normalize_velocity(aircraft.velocity[0]))
-            s.append(normalize_velocity(aircraft.velocity[1]))
+
         for i in range(1):
             # (x, y, vx, vy, speed, heading)
             s.append(self.drone.position[0] / Config.window_width)
@@ -123,6 +118,13 @@ class SingleAircraftHEREnv(gym.GoalEnv):
             s.append(normalize_velocity(self.drone.velocity[1]))
             s.append((self.drone.speed - Config.min_speed) / (Config.max_speed - Config.min_speed))
             s.append(self.drone.heading / (2 * math.pi))
+
+        for aircraft in self.intruder_list:
+            # (x, y, vx, vy)
+            s.append(aircraft.position[0] / Config.window_width)
+            s.append(aircraft.position[1] / Config.window_height)
+            s.append(normalize_velocity(aircraft.velocity[0]))
+            s.append(normalize_velocity(aircraft.velocity[1]))
 
         return {
             'observation': np.array(s),

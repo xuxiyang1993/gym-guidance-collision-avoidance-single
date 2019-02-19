@@ -267,7 +267,8 @@ for i in range(MAX_EPISODES):
 
         # Add exploration noise
         a = actor.choose_action(s)
-        a = np.clip(np.random.normal(a, var), -2, 2)  # add randomness to action selection for exploration
+        # add randomness to action selection for exploration
+        a = np.clip(np.random.normal(a, var), env.action_space.low, env.action_space.high)
         s_, r, done, info = env.step(a)
 
         episode_experience.append([s, a, r, s_, ])

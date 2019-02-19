@@ -131,7 +131,8 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         }
 
     def step(self, action):
-        assert self.action_space.contains(action), 'given action is in incorrect shape'
+        if not self.action_space.contains(action):
+            print('Warn: input action is', action)
 
         # next state of ownship
         self.drone.step(action)

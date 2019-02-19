@@ -38,7 +38,7 @@ HER = False
 
 RENDER = False
 OUTPUT_GRAPH = True
-ENV_NAME = 'guidance-collision-avoidance-single-v0'
+ENV_NAME = 'guidance-collision-avoidance-single-continuous-action-v0'
 
 
 ###############################  Actor  ####################################
@@ -101,7 +101,6 @@ class Actor(object):
             self.t_replace_counter += 1
 
     def choose_action(self, s):
-        import ipdb; ipdb.set_trace()
         s = s[np.newaxis, :]  # single state
         return self.sess.run(self.a, feed_dict={S: s})[0]  # single action
 
@@ -235,7 +234,7 @@ with tf.name_scope('R'):
 with tf.name_scope('S_'):
     S_ = tf.placeholder(tf.float32, shape=[None, state_dim], name='s_')
 with tf.name_scope('DONE'):
-    DONE = tf.placeholder(tf.int32, shape=[None, 1], name='done')
+    DONE = tf.placeholder(tf.float32, shape=[None, 1], name='done')
 
 sess = tf.Session()
 

@@ -15,6 +15,8 @@ import numpy as np
 import gym
 import time
 
+from gym_guidance_collision_avoidance_single.envs import SingleAircraft2Env
+
 np.random.seed(1)
 tf.set_random_seed(1)
 
@@ -31,6 +33,8 @@ REPLACEMENT = [
 ][0]  # you can try different target replacement strategies
 MEMORY_CAPACITY = 100000
 BATCH_SIZE = 32
+
+HER = False
 
 RENDER = False
 OUTPUT_GRAPH = True
@@ -77,7 +81,7 @@ class Actor(object):
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l2',
                                   trainable=trainable)
             net = tf.layers.dense(net, 64, activation=tf.nn.relu,
-                                  kernel_initializer=init_w, bias_initializer=init_b, name='l2',
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l3',
                                   trainable=trainable)
             with tf.variable_scope('a'):
                 actions = tf.layers.dense(net, self.a_dim, activation=tf.nn.tanh, kernel_initializer=init_w,
@@ -97,6 +101,7 @@ class Actor(object):
             self.t_replace_counter += 1
 
     def choose_action(self, s):
+        import ipdb; ipdb.set_trace()
         s = s[np.newaxis, :]  # single state
         return self.sess.run(self.a, feed_dict={S: s})[0]  # single action
 
@@ -137,7 +142,7 @@ class Critic(object):
             self.t_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Critic/target_net')
 
         with tf.variable_scope('target_q'):
-            self.target_q = R + self.gamma * self.q_
+            self.target_q = R + (1 - DONE) * self.gamma * self.q_
 
         with tf.variable_scope('TD_error'):
             self.loss = tf.reduce_mean(tf.squared_difference(self.target_q, self.q))
@@ -161,19 +166,31 @@ class Critic(object):
             init_b = tf.constant_initializer(0.1)
 
             with tf.variable_scope('l1'):
-                n_l1 = 30
+                n_l1 = 128
                 w1_s = tf.get_variable('w1_s', [self.s_dim, n_l1], initializer=init_w, trainable=trainable)
                 w1_a = tf.get_variable('w1_a', [self.a_dim, n_l1], initializer=init_w, trainable=trainable)
                 b1 = tf.get_variable('b1', [1, n_l1], initializer=init_b, trainable=trainable)
                 net = tf.nn.relu(tf.matmul(s, w1_s) + tf.matmul(a, w1_a) + b1)
+
+            with tf.variable_scope('l2'):
+                n_l2 = 128
+                w2 = tf.get_variable('w2', [n_l1, n_l2], initializer=init_w, trainable=trainable)
+                b2 = tf.get_variable('b2', [1, n_l2], initializer=init_b, trainable=trainable)
+                net = tf.nn.relu(tf.matmul(net, w2) + b2)
+
+            with tf.variable_scope('l3'):
+                n_l3 = 64
+                w3 = tf.get_variable('w3', [n_l2, n_l3], initializer=init_w, trainable=trainable)
+                b3 = tf.get_variable('b3', [1, n_l3], initializer=init_b, trainable=trainable)
+                net = tf.nn.relu(tf.matmul(net, w3) + b3)
 
             with tf.variable_scope('q'):
                 q = tf.layers.dense(net, 1, kernel_initializer=init_w, bias_initializer=init_b,
                                     trainable=trainable)  # Q(s,a)
         return q
 
-    def learn(self, s, a, r, s_):
-        self.sess.run(self.train_op, feed_dict={S: s, self.a: a, R: r, S_: s_})
+    def learn(self, s, a, r, s_, done):
+        self.sess.run(self.train_op, feed_dict={S: s, self.a: a, R: r, S_: s_, DONE: done})
         if self.replacement['name'] == 'soft':
             self.sess.run(self.soft_replacement)
         else:
@@ -190,8 +207,8 @@ class Memory(object):
         self.data = np.zeros((capacity, dims))
         self.pointer = 0
 
-    def store_transition(self, s, a, r, s_):
-        transition = np.hstack((s, a, [r], s_))
+    def store_transition(self, s, a, r, s_, done):
+        transition = np.hstack((s, a, [r], s_, done))
         index = self.pointer % self.capacity  # replace the old memory with new memory
         self.data[index, :] = transition
         self.pointer += 1
@@ -217,6 +234,8 @@ with tf.name_scope('R'):
     R = tf.placeholder(tf.float32, [None, 1], name='r')
 with tf.name_scope('S_'):
     S_ = tf.placeholder(tf.float32, shape=[None, state_dim], name='s_')
+with tf.name_scope('DONE'):
+    DONE = tf.placeholder(tf.int32, shape=[None, 1], name='done')
 
 sess = tf.Session()
 
@@ -228,10 +247,10 @@ actor.add_grad_to_graph(critic.a_grads)
 
 sess.run(tf.global_variables_initializer())
 
-M = Memory(MEMORY_CAPACITY, dims=2 * state_dim + action_dim + 1)
+M = Memory(MEMORY_CAPACITY, dims=2 * state_dim + action_dim + 2)
 
 if OUTPUT_GRAPH:
-    tf.summary.FileWriter("logs/", sess.graph)
+    tf.summary.FileWriter("DDPGlogs/", sess.graph)
 
 var = 3  # control exploration
 
@@ -239,8 +258,10 @@ t1 = time.time()
 for i in range(MAX_EPISODES):
     s = env.reset()
     ep_reward = 0
+    episode_experience = []
+    episode_succeeded = False
 
-    for j in range(MAX_EP_STEPS):
+    for t in range(MAX_EP_STEPS):
 
         if RENDER:
             env.render()
@@ -250,23 +271,24 @@ for i in range(MAX_EPISODES):
         a = np.clip(np.random.normal(a, var), -2, 2)  # add randomness to action selection for exploration
         s_, r, done, info = env.step(a)
 
-        M.store_transition(s, a, r / 10, s_)
+        episode_experience.append([s, a, r, s_, ])
 
         if M.pointer > MEMORY_CAPACITY:
             var *= .9995  # decay the action randomness
             b_M = M.sample(BATCH_SIZE)
             b_s = b_M[:, :state_dim]
             b_a = b_M[:, state_dim: state_dim + action_dim]
-            b_r = b_M[:, -state_dim - 1: -state_dim]
-            b_s_ = b_M[:, -state_dim:]
+            b_r = b_M[:, state_dim + action_dim: state_dim + action_dim + 1]
+            b_s_ = b_M[:, state_dim + action_dim + 1: 2 * state_dim + action_dim + 1]
+            b_done = b_M[:, 2 * state_dim + action_dim + 1:]
 
-            critic.learn(b_s, b_a, b_r, b_s_)
+            critic.learn(b_s, b_a, b_r, b_s_, done)
             actor.learn(b_s)
 
         s = s_
         ep_reward += r
 
-        if j == MAX_EP_STEPS - 1:
+        if t == MAX_EP_STEPS - 1:
             print('Episode:', i, ' Reward: %i' % int(ep_reward), 'Explore: %.2f' % var, )
             if ep_reward > -300:
                 RENDER = True

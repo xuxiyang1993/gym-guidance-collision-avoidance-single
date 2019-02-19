@@ -39,7 +39,7 @@ K = 4
 
 RENDER = False
 OUTPUT_GRAPH = True
-ENV_NAME = 'guidance-collision-avoidance-single-continuous-action-v0'
+ENV_NAME = 'guidance-collision-avoidance-single-HER-v0'
 
 
 ###############################  Actor  ####################################
@@ -223,7 +223,8 @@ env = gym.make(ENV_NAME)
 env = env.unwrapped
 env.seed(1)
 
-state_dim = env.observation_space.shape[0]
+goal_dim = 2
+state_dim = env.observation_space.spaces['observation'].shape[0] + goal_dim
 action_dim = env.action_space.shape[0]
 action_bound = env.action_space.high
 
@@ -296,7 +297,7 @@ for i in range(MAX_EPISODES):
             b_s_ = b_M[:, state_dim + action_dim + 1: 2 * state_dim + action_dim + 1]
             b_done = b_M[:, 2 * state_dim + action_dim + 1:]
 
-            critic.learn(b_s, b_a, b_r, b_s_, done)
+            critic.learn(b_s, b_a, b_r, b_s_, b_done)
             actor.learn(b_s)
 
     # store the episode experience to replay buffer M

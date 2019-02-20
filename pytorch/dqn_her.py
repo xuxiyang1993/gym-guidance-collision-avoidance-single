@@ -87,14 +87,14 @@ def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--episodes', '-e', type=int, default=30000)
-    parser.add_argument('--train', type=bool, default=True)
-    parser.add_argument('--HER', type=bool, default=False)
+    parser.add_argument('--train', type=bool, default=False)
+    parser.add_argument('--her', type=bool, default=False)
     parser.add_argument('--seed', type=int, default=101)
     parser.add_argument('--save_path', '-s', type=str, default='save_model/checkpoint.pth')
     args = parser.parse_args()
 
     env = SingleAircraftHEREnv()
-    agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n, HER=args.HER)
+    agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n, HER=args.her)
 
     if args.train:
         train(env, agent, n_episodes=args.episodes, save_path=args.save_path)

@@ -7,11 +7,7 @@ from SingleAircraftHEREnv import SingleAircraftHEREnv
 from agent import Agent
 
 
-env = SingleAircraftHEREnv()
-agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n)
-state = env.reset()
-
-def train(n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.9999):
+def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.9999):
     # training loop
     total_rewards = []
     reward_window = deque(maxlen=100)
@@ -54,25 +50,49 @@ def train(n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.9999):
                 print('\rEpisode {}\tAverage Score: {:.2f}\tPrevious Score: {:.2f}'.format(i, np.mean(reward_window), last_mean_reward))
                 print('Model saved')
                 last_mean_reward = np.mean(reward_window)
-    return total_rewards
 
-total_rewards = train()
-
-fig = plt.figure()
-ax = fig.add_subplot(111)
-plt.plot(np.arange(len(total_rewards)), total_rewards)
-plt.ylabel('Score')
-plt.xlabel('Episode #')
-plt.show()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.plot(np.arange(len(total_rewards)), total_rewards)
+    plt.ylabel('Score')
+    plt.xlabel('Episode #')
+    plt.show()
 
 
-agent.local.load_state_dict(torch.load('checkpoint.pth'))
-for i in range(10):
-    state = env.reset()
-    done = False
-    while not done:
-        action = agent.act(state)
-        env.render()
-        state, reward, done, _ = env.step(action)
-        
-env.close()
+def evaluate(env, agent):
+    agent.local.load_state_dict(torch.load('checkpoint.pth'))
+    for i in range(10):
+        last_ob = env.reset()
+        done = False
+        while not done:
+            state = last_ob['observation']
+            goal = last_ob['desired_goal']
+            inputs = np.concatenate([state, goal], axis=-1)
+            action = agent.act(inputs)
+            env.render()
+            ob, reward, done, _ = env.step(action)
+            last_ob = ob
+
+    env.close()
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--episodes', '-e', type=int, default=30000)
+    parser.add_argument('--play', '-p', type=bool, default=False)
+    parser.add_argument('--HER', type=bool, default=False)
+    parser.add_argument('--seed', type=int, default=101)
+    args = parser.parse_args()
+
+    env = SingleAircraftHEREnv()
+    agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n)
+
+    if not args.play:
+        train(env, agent, n_episodes=args.episodes)
+
+    evaluate(env, agent)
+
+
+if __name__ == '__main__':
+    main()

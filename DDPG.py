@@ -317,6 +317,7 @@ for i in range(MAX_EPISODES):
                 M.store_transition(inputs, a, r, new_inputs, r_n == 1)
 
     print('Training Episode', i)
+    input('press enter...')
 
 for i in range(100):
     last_ob = env.reset()

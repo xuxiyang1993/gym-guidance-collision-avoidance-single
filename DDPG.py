@@ -22,7 +22,7 @@ tf.set_random_seed(1)
 
 #####################  hyper parameters  ####################
 
-MAX_EPISODES = 2000
+MAX_EPISODES = 10000
 MAX_EP_STEPS = 1000
 LR_A = 0.001  # learning rate for actor
 LR_C = 0.001  # learning rate for critic

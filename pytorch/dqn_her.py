@@ -8,7 +8,7 @@ from agent import Agent
 
 
 def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.9999,
-          save_path='save_model\checkpoint.pth'):
+          save_path='save_model/checkpoint.pth'):
     # training loop
     total_rewards = []
     reward_window = deque(maxlen=100)
@@ -47,11 +47,13 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i, np.mean(reward_window)))
         if i >= 1000:
             if last_mean_reward < np.mean(reward_window) or i % 100 == 0:
-                torch.save(agent.local.state_dict(), save_path)
+                torch.save(agent.local.state_dict(), 'save_model/checkpoint.pth')
                 print('\rEpisode {}\tAverage Score: {:.2f}\tPrevious Score: {:.2f}'.format(i, np.mean(reward_window),
                                                                                            last_mean_reward))
                 print('Model saved')
                 last_mean_reward = np.mean(reward_window)
+
+    torch.save(agent.local.state_dict(), save_path)
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -61,8 +63,8 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
     plt.show()
 
 
-def evaluate(env, agent):
-    agent.local.load_state_dict(torch.load('checkpoint.pth'))
+def evaluate(env, agent, load_path):
+    agent.local.load_state_dict(torch.load(load_path))
     for i in range(10):
         last_ob = env.reset()
         done = False
@@ -97,7 +99,7 @@ def main():
     if args.train:
         train(env, agent, n_episodes=args.episodes, save_path=args.save_path)
 
-    evaluate(env, agent)
+    evaluate(env, agent, args.save_path)
 
 
 if __name__ == '__main__':

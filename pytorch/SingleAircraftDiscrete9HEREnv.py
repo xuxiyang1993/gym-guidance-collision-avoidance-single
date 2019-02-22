@@ -9,7 +9,7 @@ from config import Config
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
 
-class SingleAircraftHEREnv(gym.GoalEnv):
+class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
     """
     This is the airspace simulator where we can control single aircraft (yellow aircraft)
     to reach the goal position (green star) while avoiding conflicts with other intruder aircraft (red aircraft).
@@ -78,9 +78,9 @@ class SingleAircraftHEREnv(gym.GoalEnv):
 
         # initiate ownship to control
         self.drone = Ownship(
-            position=(50, 50),
-            speed=self.min_speed,
-            heading=math.pi/4
+            position=self.random_pos(),
+            speed=self.random_speed(),
+            heading=self.random_heading()
         )
 
         # randomly generate intruder aircraft and store them in a list
@@ -195,7 +195,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
-        return (d < self.goal_radius).astype(np.float32)
+        return -((d > self.goal_radius).astype(np.float32))
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering

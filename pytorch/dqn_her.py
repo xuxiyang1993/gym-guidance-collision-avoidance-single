@@ -3,7 +3,7 @@ import numpy as np
 import random
 from collections import deque
 import matplotlib.pyplot as plt
-from SingleAircraftHEREnv import SingleAircraftHEREnv
+from SingleAircraftDiscrete9HEREnv import SingleAircraftDiscrete9HEREnv
 from agent import Agent
 
 
@@ -93,7 +93,7 @@ def main():
     parser.add_argument('--save_path', '-s', type=str, default='save_model/checkpoint.pth')
     args = parser.parse_args()
 
-    env = SingleAircraftHEREnv()
+    env = SingleAircraftDiscrete9HEREnv()
     agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n, HER=args.her)
 
     if args.train:

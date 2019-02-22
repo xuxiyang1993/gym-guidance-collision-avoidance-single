@@ -190,8 +190,8 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 1, True, 'g'  # goal
-        return 0, False, ''
+            return 0, True, 'g'  # goal
+        return -1, False, ''
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)

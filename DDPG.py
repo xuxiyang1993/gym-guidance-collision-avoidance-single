@@ -28,8 +28,8 @@ LR_A = 0.001  # learning rate for actor
 LR_C = 0.001  # learning rate for critic
 GAMMA = 0.95  # reward discount
 REPLACEMENT = [
-    dict(name='soft', tau=0.01),
-    dict(name='hard', rep_iter_a=600, rep_iter_c=500)
+    dict(name='soft', tau=0.001),
+    dict(name='hard', rep_iter_a=1000, rep_iter_c=1000)
 ][0]  # you can try different target replacement strategies
 MEMORY_CAPACITY = 100000
 BATCH_SIZE = 32

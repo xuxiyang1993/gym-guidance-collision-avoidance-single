@@ -23,11 +23,11 @@ class Config:
     max_speed = 80 / scale
     d_speed = 5 / scale
     speed_sigma = 2 / scale
-    position_sigma = 10 / scale
+    position_sigma = 0 / scale
 
     # heading in rad TBD
     d_heading = math.radians(5)
-    heading_sigma = math.radians(2)
+    heading_sigma = math.radians(0)
 
     # bank
     min_bank = -25
@@ -35,5 +35,5 @@ class Config:
     d_bank = 5
     bank_sigma = 4
     
-    #maximum steps of one episode
+    # maximum steps of one episode
     max_steps = 1000

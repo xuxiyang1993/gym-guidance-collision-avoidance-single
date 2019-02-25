@@ -109,12 +109,7 @@ class SingleAircraftDiscreteHEREnv(gym.GoalEnv):
             return translation / (self.max_speed * 2)
 
         s = []
-        for aircraft in self.intruder_list:
-            # (x, y, vx, vy)
-            s.append(aircraft.position[0] / Config.window_width)
-            s.append(aircraft.position[1] / Config.window_height)
-            s.append(normalize_velocity(aircraft.velocity[0]))
-            s.append(normalize_velocity(aircraft.velocity[1]))
+
         for i in range(1):
             # (x, y, vx, vy, speed, heading)
             s.append(self.drone.position[0] / Config.window_width)
@@ -124,10 +119,23 @@ class SingleAircraftDiscreteHEREnv(gym.GoalEnv):
             s.append((self.drone.speed - Config.min_speed) / (Config.max_speed - Config.min_speed))
             s.append(self.drone.heading / (2 * math.pi))
 
+        for aircraft in self.intruder_list:
+            # (x, y, vx, vy)
+            s.append(aircraft.position[0] / Config.window_width)
+            s.append(aircraft.position[1] / Config.window_height)
+            s.append(normalize_velocity(aircraft.velocity[0]))
+            s.append(normalize_velocity(aircraft.velocity[1]))
+
+        achieved_goal = np.array([self.drone.position[0] / Config.window_width,
+                                  self.drone.position[1] / Config.window_height])
+
+        desired_goal = np.array([self.goal.position[0] / Config.window_width,
+                                 self.goal.position[1] / Config.window_height])
+
         return {
             'observation': np.array(s),
-            'achieved_goal': self.drone.position.copy(),
-            'desired_goal': self.goal.position.copy(),
+            'achieved_goal': achieved_goal,
+            'desired_goal': desired_goal,
         }
 
     def step(self, action):
@@ -182,7 +190,7 @@ class SingleAircraftDiscreteHEREnv(gym.GoalEnv):
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
-        return (d < self.goal_radius).astype(np.float32)
+        return -((d > self.goal_radius).astype(np.float32))
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering

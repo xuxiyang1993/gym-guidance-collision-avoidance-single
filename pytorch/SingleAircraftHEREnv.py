@@ -126,10 +126,16 @@ class SingleAircraftHEREnv(gym.GoalEnv):
             s.append(normalize_velocity(aircraft.velocity[0]))
             s.append(normalize_velocity(aircraft.velocity[1]))
 
+        achieved_goal = np.array([self.drone.position[0] / Config.window_width,
+                                  self.drone.position[1] / Config.window_height])
+
+        desired_goal = np.array([self.goal.position[0] / Config.window_width,
+                                 self.goal.position[1] / Config.window_height])
+
         return {
             'observation': np.array(s),
-            'achieved_goal': self.drone.position.copy(),
-            'desired_goal': self.goal.position.copy(),
+            'achieved_goal': achieved_goal,
+            'desired_goal': desired_goal,
         }
 
     def step(self, action):
@@ -187,7 +193,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
-        return (d < self.goal_radius).astype(np.float32)
+        return -((d > self.goal_radius).astype(np.float32))
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering

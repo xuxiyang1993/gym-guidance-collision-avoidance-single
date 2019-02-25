@@ -70,7 +70,7 @@ class SingleAircraft2Env(gym.Env):
         self.drone = Ownship(
             position=(50, 50),
             speed=self.min_speed,
-            heading=math.pi/4
+            heading=math.pi / 4
         )
 
         # randomly generate intruder aircraft and store them in a list
@@ -131,7 +131,7 @@ class SingleAircraft2Env(gym.Env):
 
         reward, terminal, info = self._terminal_reward()
 
-        return self._get_ob(), reward, terminal, info
+        return self._get_ob(), reward, terminal, {'result': info}
 
     def _terminal_reward(self):
 
@@ -166,13 +166,14 @@ class SingleAircraft2Env(gym.Env):
         if conflict:
             return -1, False, 'c'  # conflict
 
-        if not self.position_range.contains(self.drone.position):
-            return -100, True, 'w'  # out-of-map
+        # if ownship out of map
+        # if not self.position_range.contains(self.drone.position):
+        #     return -5, True, 'w'  # out-of-map
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 1, True, 'g'  # goal
-        return -dist(self.drone, self.goal)/1200, False, ''
+            return 10, True, 'g'  # goal
+        return -dist(self.drone, self.goal) / 1200, False, ''
         return 0, False, ''
 
     def render(self, mode='human'):
@@ -190,7 +191,7 @@ class SingleAircraft2Env(gym.Env):
 
         # draw ownship
         ownship_img = rendering.Image(os.path.join(__location__, 'images/aircraft.png'), 32, 32)
-        jtransform = rendering.Transform(rotation=self.drone.heading - math.pi/2, translation=self.drone.position)
+        jtransform = rendering.Transform(rotation=self.drone.heading - math.pi / 2, translation=self.drone.position)
         ownship_img.add_attr(jtransform)
         ownship_img.set_color(255, 241, 4)  # set it to yellow
         self.viewer.onetime_geoms.append(ownship_img)
@@ -205,7 +206,7 @@ class SingleAircraft2Env(gym.Env):
         # draw intruders
         for aircraft in self.intruder_list:
             intruder_img = rendering.Image(os.path.join(__location__, 'images/intruder.png'), 32, 32)
-            jtransform = rendering.Transform(rotation=aircraft.heading - math.pi/2, translation=aircraft.position)
+            jtransform = rendering.Transform(rotation=aircraft.heading - math.pi / 2, translation=aircraft.position)
             intruder_img.add_attr(jtransform)
             intruder_img.set_color(237, 26, 32)  # red color
             self.viewer.onetime_geoms.append(intruder_img)
@@ -239,7 +240,7 @@ class SingleAircraft2Env(gym.Env):
         return np.random.uniform(low=self.min_speed, high=self.max_speed)
 
     def random_heading(self):
-        return np.random.uniform(low=0, high=2*math.pi)
+        return np.random.uniform(low=0, high=2 * math.pi)
 
     def build_observation_space(self):
         s = spaces.Dict({
@@ -247,7 +248,7 @@ class SingleAircraft2Env(gym.Env):
             'own_y': spaces.Box(low=0, high=self.window_height, dtype=np.float32),
             'pos_x': spaces.Box(low=0, high=self.window_width, dtype=np.float32),
             'pos_y': spaces.Box(low=0, high=self.window_height, dtype=np.float32),
-            'heading': spaces.Box(low=0, high=2*math.pi, dtype=np.float32),
+            'heading': spaces.Box(low=0, high=2 * math.pi, dtype=np.float32),
             'speed': spaces.Box(low=self.min_speed, high=self.max_speed, dtype=np.float32),
         })
         return s
@@ -276,7 +277,6 @@ class Ownship(Aircraft):
         self.load_config()
 
     def load_config(self):
-
         self.G = Config.G
         self.scale = Config.scale
         self.min_speed = Config.min_speed
@@ -289,9 +289,9 @@ class Ownship(Aircraft):
         self.heading_sigma = Config.heading_sigma
 
     def step(self, a):
-        self.heading += self.d_heading * a[0]
+        self.heading += self.d_heading * (a[0] - 1)
         self.heading += np.random.normal(0, self.heading_sigma)
-        self.speed += self.d_speed * a[1]
+        self.speed += self.d_speed * (a[1] - 1)
         self.speed = max(self.min_speed, min(self.speed, self.max_speed))  # project to range
         self.speed += np.random.normal(0, self.speed_sigma)
 

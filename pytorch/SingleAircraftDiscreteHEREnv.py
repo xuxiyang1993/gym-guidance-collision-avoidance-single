@@ -136,7 +136,7 @@ class SingleAircraftDiscreteHEREnv(gym.GoalEnv):
 
         reward, terminal, info = self._terminal_reward()
 
-        return self._get_ob(), reward, terminal, {}
+        return self._get_ob(), reward, terminal, {'result': info}
 
     def _terminal_reward(self):
 
@@ -171,13 +171,14 @@ class SingleAircraftDiscreteHEREnv(gym.GoalEnv):
         if conflict:
             return -1, False, 'c'  # conflict
 
-        if not self.position_range.contains(self.drone.position):
-            return -5, True, 'w'  # out-of-map
+        # if ownship out of map
+        # if not self.position_range.contains(self.drone.position):
+        #     return -5, True, 'w'  # out-of-map
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 1, True, 'g'  # goal
-        return 0, False, ''
+            return 0, True, 'g'  # goal
+        return -1, False, ''
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
@@ -284,7 +285,6 @@ class Ownship(Aircraft):
         self.load_config()
 
     def load_config(self):
-
         self.G = Config.G
         self.scale = Config.scale
         self.min_speed = Config.min_speed

@@ -70,7 +70,7 @@ class SingleAircraftEnv(gym.Env):
         self.drone = Ownship(
             position=(50, 50),
             speed=self.min_speed,
-            heading=math.pi/4
+            heading=math.pi / 4
         )
 
         # randomly generate intruder aircraft and store them in a list
@@ -136,7 +136,7 @@ class SingleAircraftEnv(gym.Env):
 
         reward, terminal, info = self._terminal_reward()
 
-        return self._get_ob(), reward, terminal, info
+        return self._get_ob(), reward, terminal, {'result': info}
 
     def _terminal_reward(self):
 
@@ -165,20 +165,20 @@ class SingleAircraftEnv(gym.Env):
 
                 # if there is a near-mid-air-collision
                 if dist_intruder < self.NMAC_dist:
-                    return -20, True, 'n'  # NMAC
+                    return -5, True, 'n'  # NMAC
 
         # if there is conflict
         if conflict:
-            return -5, False, 'c'  # conflict
+            return -1, False, 'c'  # conflict
 
         # if ownship out of map
         # if not self.position_range.contains(self.drone.position):
-        #     return -1, True, 'w'  # out-of-map
+        #     return -5, True, 'w'  # out-of-map
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
             return 10, True, 'g'  # goal
-        return -dist(self.drone, self.goal)/1200, False, ''
+        return -dist(self.drone, self.goal) / 1200, False, ''
         return 0, False, ''
 
     def render(self, mode='human'):
@@ -196,7 +196,7 @@ class SingleAircraftEnv(gym.Env):
 
         # draw ownship
         ownship_img = rendering.Image(os.path.join(__location__, 'images/aircraft.png'), 32, 32)
-        jtransform = rendering.Transform(rotation=self.drone.heading - math.pi/2, translation=self.drone.position)
+        jtransform = rendering.Transform(rotation=self.drone.heading - math.pi / 2, translation=self.drone.position)
         ownship_img.add_attr(jtransform)
         ownship_img.set_color(255, 241, 4)  # set it to yellow
         self.viewer.onetime_geoms.append(ownship_img)
@@ -211,7 +211,7 @@ class SingleAircraftEnv(gym.Env):
         # draw intruders
         for aircraft in self.intruder_list:
             intruder_img = rendering.Image(os.path.join(__location__, 'images/intruder.png'), 32, 32)
-            jtransform = rendering.Transform(rotation=aircraft.heading - math.pi/2, translation=aircraft.position)
+            jtransform = rendering.Transform(rotation=aircraft.heading - math.pi / 2, translation=aircraft.position)
             intruder_img.add_attr(jtransform)
             intruder_img.set_color(237, 26, 32)  # red color
             self.viewer.onetime_geoms.append(intruder_img)
@@ -245,7 +245,7 @@ class SingleAircraftEnv(gym.Env):
         return np.random.uniform(low=self.min_speed, high=self.max_speed)
 
     def random_heading(self):
-        return np.random.uniform(low=0, high=2*math.pi)
+        return np.random.uniform(low=0, high=2 * math.pi)
 
     def build_observation_space(self):
         s = spaces.Dict({
@@ -253,7 +253,7 @@ class SingleAircraftEnv(gym.Env):
             'own_y': spaces.Box(low=0, high=self.window_height, dtype=np.float32),
             'pos_x': spaces.Box(low=0, high=self.window_width, dtype=np.float32),
             'pos_y': spaces.Box(low=0, high=self.window_height, dtype=np.float32),
-            'heading': spaces.Box(low=0, high=2*math.pi, dtype=np.float32),
+            'heading': spaces.Box(low=0, high=2 * math.pi, dtype=np.float32),
             'speed': spaces.Box(low=self.min_speed, high=self.max_speed, dtype=np.float32),
         })
         return s
@@ -282,7 +282,6 @@ class Ownship(Aircraft):
         self.load_config()
 
     def load_config(self):
-
         self.G = Config.G
         self.scale = Config.scale
         self.min_speed = Config.min_speed

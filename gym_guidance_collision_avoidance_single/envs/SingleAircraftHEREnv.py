@@ -75,7 +75,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         self.drone = Ownship(
             position=(50, 50),
             speed=self.min_speed,
-            heading=math.pi/4
+            heading=math.pi / 4
         )
 
         # randomly generate intruder aircraft and store them in a list
@@ -126,10 +126,16 @@ class SingleAircraftHEREnv(gym.GoalEnv):
             s.append(normalize_velocity(aircraft.velocity[0]))
             s.append(normalize_velocity(aircraft.velocity[1]))
 
+        achieved_goal = np.array([self.drone.position[0] / Config.window_width,
+                                  self.drone.position[1] / Config.window_height])
+
+        desired_goal = np.array([self.goal.position[0] / Config.window_width,
+                                 self.goal.position[1] / Config.window_height])
+
         return {
             'observation': np.array(s),
-            'achieved_goal': self.drone.position.copy(),
-            'desired_goal': self.goal.position.copy(),
+            'achieved_goal': achieved_goal,
+            'desired_goal': desired_goal,
         }
 
     def step(self, action):
@@ -141,7 +147,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
 
         reward, terminal, info = self._terminal_reward()
 
-        return self._get_ob(), reward, terminal, {}
+        return self._get_ob(), reward, terminal, {'result': info}
 
     def _terminal_reward(self):
 
@@ -176,17 +182,18 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         if conflict:
             return -1, False, 'c'  # conflict
 
+        # if ownship out of map
         # if not self.position_range.contains(self.drone.position):
         #     return -5, True, 'w'  # out-of-map
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 1, True, 'g'  # goal
-        return 0, False, ''
+            return 0, True, 'g'  # goal
+        return -1, False, ''
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
-        return (d < self.goal_radius).astype(np.float32)
+        return -((d > self.goal_radius).astype(np.float32))
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
@@ -203,7 +210,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
 
         # draw ownship
         ownship_img = rendering.Image(os.path.join(__location__, 'images/aircraft.png'), 32, 32)
-        jtransform = rendering.Transform(rotation=self.drone.heading - math.pi/2, translation=self.drone.position)
+        jtransform = rendering.Transform(rotation=self.drone.heading - math.pi / 2, translation=self.drone.position)
         ownship_img.add_attr(jtransform)
         ownship_img.set_color(255, 241, 4)  # set it to yellow
         self.viewer.onetime_geoms.append(ownship_img)
@@ -218,7 +225,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         # draw intruders
         for aircraft in self.intruder_list:
             intruder_img = rendering.Image(os.path.join(__location__, 'images/intruder.png'), 32, 32)
-            jtransform = rendering.Transform(rotation=aircraft.heading - math.pi/2, translation=aircraft.position)
+            jtransform = rendering.Transform(rotation=aircraft.heading - math.pi / 2, translation=aircraft.position)
             intruder_img.add_attr(jtransform)
             intruder_img.set_color(237, 26, 32)  # red color
             self.viewer.onetime_geoms.append(intruder_img)
@@ -252,7 +259,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         return np.random.uniform(low=self.min_speed, high=self.max_speed)
 
     def random_heading(self):
-        return np.random.uniform(low=0, high=2*math.pi)
+        return np.random.uniform(low=0, high=2 * math.pi)
 
     def build_observation_space(self):
         s = spaces.Dict({
@@ -260,7 +267,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
             'own_y': spaces.Box(low=0, high=self.window_height, dtype=np.float32),
             'pos_x': spaces.Box(low=0, high=self.window_width, dtype=np.float32),
             'pos_y': spaces.Box(low=0, high=self.window_height, dtype=np.float32),
-            'heading': spaces.Box(low=0, high=2*math.pi, dtype=np.float32),
+            'heading': spaces.Box(low=0, high=2 * math.pi, dtype=np.float32),
             'speed': spaces.Box(low=self.min_speed, high=self.max_speed, dtype=np.float32),
         })
         return s
@@ -289,7 +296,6 @@ class Ownship(Aircraft):
         self.load_config()
 
     def load_config(self):
-
         self.G = Config.G
         self.scale = Config.scale
         self.min_speed = Config.min_speed

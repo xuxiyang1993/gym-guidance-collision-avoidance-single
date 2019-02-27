@@ -4,7 +4,7 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 
-from .config import Config
+from config import Config
 
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
@@ -189,7 +189,7 @@ class SingleAircraftHEREnv(gym.GoalEnv):
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
             return 0, True, 'g'  # goal
-        return -1, False, ''
+        return -0.01, False, ''
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)

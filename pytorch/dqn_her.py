@@ -4,7 +4,7 @@ import random
 from collections import deque
 import matplotlib.pyplot as plt
 from SingleAircraftDiscrete9HEREnv import SingleAircraftDiscrete9HEREnv
-from agent import Agent
+from agent_her import Agent
 
 
 def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.9999,

@@ -185,11 +185,11 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
 
                 # if there is a near-mid-air-collision
                 if dist_intruder < self.NMAC_dist:
-                    return -5, True, 'n'  # NMAC
+                    return -10, True, 'n'  # NMAC
 
         # if there is conflict
         if conflict:
-            return -1, False, 'c'  # conflict
+            return -5, False, 'c'  # conflict
 
         # if ownship out of map
         # if not self.position_range.contains(self.drone.position):
@@ -197,8 +197,8 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
-            return 0, True, 'g'  # goal
-        return -1, False, ''
+            return 10, True, 'g'  # goal
+        return -0.01, False, ''
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)

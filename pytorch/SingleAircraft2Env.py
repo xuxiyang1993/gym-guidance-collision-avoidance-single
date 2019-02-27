@@ -174,7 +174,7 @@ class SingleAircraft2Env(gym.Env):
         if dist(self.drone, self.goal) < self.goal_radius:
             return 10, True, 'g'  # goal
         return -dist(self.drone, self.goal) / 1200, False, ''
-        return 0, False, ''
+        return -0.01, False, ''
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering

@@ -28,12 +28,14 @@ class Config:
     # heading in rad TBD
     d_heading = math.radians(5)
     heading_sigma = math.radians(0)
-
-    # bank
-    min_bank = -25
-    max_bank = 25
-    d_bank = 5
-    bank_sigma = 4
     
     # maximum steps of one episode
     max_steps = 1000
+
+    # reward setting
+    NMAC_penalty = -10
+    conflict_penalty = -5
+    wall_penalty = -5
+    step_penalty = -0.01
+    goal_reward = 10
+    sparse_reward = True

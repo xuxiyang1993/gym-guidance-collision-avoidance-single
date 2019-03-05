@@ -21,7 +21,7 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
         total_reward = 0
         done = False
 
-        while not done:
+        while not done and episode_timestep < 1000:
             # env.render()
             observation = np.copy(last_ob['observation'])
             desired_goal = np.copy(last_ob['desired_goal'])
@@ -29,13 +29,11 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
             episode_timestep += 1
             action = agent.act(inputs, epsilon)
             new_ob, reward, done, _ = env.step(action)
-            new_observation = last_ob['observation']
+            new_observation = np.copy(new_ob['observation'])
             agent.step()
             episode_experience.append((observation, action, reward, new_observation, desired_goal, done))
             last_ob = new_ob
             total_reward += reward
-            if episode_timestep > 1000:
-                break
 
         agent.add(episode_experience, env)
 
@@ -47,7 +45,7 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i, np.mean(reward_window)))
         if i >= 1000:
             if last_mean_reward < np.mean(reward_window) or i % 100 == 0:
-                torch.save(agent.local.state_dict(), 'save_model/checkpoint.pth')
+                torch.save(agent.local.state_dict(), save_path)
                 print('\rEpisode {}\tAverage Score: {:.2f}\tPrevious Score: {:.2f}'.format(i, np.mean(reward_window),
                                                                                            last_mean_reward))
                 print('Model saved')

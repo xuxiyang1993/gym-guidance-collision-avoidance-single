@@ -203,7 +203,26 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
             return Config.step_penalty, False, ''
         else:
             return -dist(self.drone, self.goal) / 1200, False, ''
+        
+    def compute_reward(self, achieved_goal, desired_goal, info):
+        achieved_goal = self.unnormalize_position(achieved_goal)
+        #print('achieved_goal is: ', achieved_goal)
+        desired_goal = self.unnormalize_position(desired_goal)
+        #print('desired_goal is: ', desired_goal)
+        d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
+        #print('distance is: ', d)
+        if Config.sparse_reward:
+            return -((d > self.goal_radius).astype(np.float32))
+        else:
+            return - d / 1200
+        
 
+    def unnormalize_position(self, position):
+        #print('position is: ', position)
+        position[0] = position[0] * Config.window_width
+        position[1] = position[1] * Config.window_height
+        return position
+        
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
 

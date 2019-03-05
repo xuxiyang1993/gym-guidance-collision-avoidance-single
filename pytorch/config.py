@@ -38,4 +38,4 @@ class Config:
     wall_penalty = -5
     step_penalty = -0.01
     goal_reward = 10
-    sparse_reward = True
+    sparse_reward = False

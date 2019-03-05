@@ -90,17 +90,22 @@ class Agent():
         '''
         for t in range(len(episode_experience)):
             s, a, r, s_n, g, done = episode_experience[t]
-            inputs = np.concatenate([s, g], axis=-1)
-            new_inputs = np.concatenate([s_n, g], axis=-1)
+            ob = np.copy(s)
+            goal = np.copy(g)
+            new_ob = np.copy(s_n)
+            inputs = np.concatenate([ob, goal], axis=-1)
+            new_inputs = np.concatenate([new_ob, goal], axis=-1)
             self.memory.add(inputs, a, r, new_inputs, done)
 
             if self.HER:
                 for k in range(4):
                     future = np.random.randint(t, len(episode_experience))
                     _, _, _, g_n, _, _ = episode_experience[future]
-                    inputs = np.concatenate([s, g_n[:2]], axis=-1)
-                    new_inputs = np.concatenate([s_n, g_n[:2]], axis=-1)
-                    r_n = env.compute_reward(s_n[:2], g_n[:2], _)
+                    achieved = np.copy(new_ob[:2])
+                    desired = np.copy(g_n[:2])
+                    inputs = np.concatenate([ob, desired], axis=-1)
+                    new_inputs = np.concatenate([new_ob, desired], axis=-1)
+                    r_n = env.compute_reward(achieved, desired, _)
                     self.memory.add(inputs, a, r_n, new_inputs, r_n == 0)
 
 

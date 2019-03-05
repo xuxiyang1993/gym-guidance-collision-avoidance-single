@@ -206,11 +206,8 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
         
     def compute_reward(self, achieved_goal, desired_goal, info):
         achieved_goal = self.unnormalize_position(achieved_goal)
-        #print('achieved_goal is: ', achieved_goal)
         desired_goal = self.unnormalize_position(desired_goal)
-        #print('desired_goal is: ', desired_goal)
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
-        #print('distance is: ', d)
         if Config.sparse_reward:
             return -((d > self.goal_radius).astype(np.float32))
         else:

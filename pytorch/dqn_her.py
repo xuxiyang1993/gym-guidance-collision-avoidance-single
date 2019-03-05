@@ -34,7 +34,7 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
             episode_experience.append((observation, action, reward, new_observation, desired_goal, done))
             last_ob = new_ob
             total_reward += reward
-
+            
         agent.add(episode_experience, env)
 
         reward_window.append(total_reward)

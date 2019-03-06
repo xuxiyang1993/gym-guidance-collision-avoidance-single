@@ -209,9 +209,15 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
         desired_goal = self.unnormalize_position(desired_goal)
         d = np.linalg.norm((achieved_goal - desired_goal), axis=-1)
         if Config.sparse_reward:
-            return -((d > self.goal_radius).astype(np.float32))
+            if d < self.goal_radius:
+                return Config.goal_reward
+            else:
+                return Config.step_penalty
         else:
-            return - d / 1200
+            if d < self.goal_radius:
+                return Config.goal_reward
+            else:
+                return - d / 1200
         
 
     def unnormalize_position(self, position):

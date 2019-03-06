@@ -106,7 +106,7 @@ class Agent():
                     inputs = np.concatenate([ob, desired], axis=-1)
                     new_inputs = np.concatenate([new_ob, desired], axis=-1)
                     r_n = env.compute_reward(achieved, desired, _)
-                    self.memory.add(inputs, a, r_n, new_inputs, r_n == 0)
+                    self.memory.add(inputs, a, r_n, new_inputs, r_n == 10)
 
 
 class ReplayBuffer():

@@ -218,7 +218,39 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
                 return Config.goal_reward
             else:
                 return - d / 1200
-        
+
+    def compute_input_reward(self, new_inputs):
+        ownx = new_inputs[0] * Config.window_width
+        owny = new_inputs[1] * Config.window_height
+        gx = new_inputs[-2] * Config.window_width
+        gy = new_inputs[-1] * Config.window_height
+
+        dist_goal = metric(ownx, owny, gx, gy)
+
+        for idx in range(self.intruder_size):
+            intrux = new_inputs[idx * 4 + 6] * Config.window_width
+            intruy = new_inputs[idx * 4 + 7] * Config.window_height
+
+            dist_intruder = metric(ownx, owny, intrux, intruy)
+
+            # if there is a conflict
+            if dist_intruder < self.minimum_separation:
+                reward = -5
+
+                # if there is a near-mid-air-collision
+                if dist_intruder < self.NMAC_dist:
+                    reward = -10
+
+                return reward
+
+        # if ownship reaches goal
+        if dist_goal < self.goal_radius:
+            return 10
+
+        if Config.sparse_reward:
+            return Config.step_penalty
+        else:
+            return -dist_goal / 1200
 
     def unnormalize_position(self, position):
         #print('position is: ', position)
@@ -353,3 +385,9 @@ class Ownship(Aircraft):
 
 def dist(object1, object2):
     return np.linalg.norm(object1.position - object2.position)
+
+
+def metric(x1, y1, x2, y2):
+    dx = x1 - x2
+    dy = y1 - y2
+    return math.sqrt(dx ** 2 + dy ** 2)

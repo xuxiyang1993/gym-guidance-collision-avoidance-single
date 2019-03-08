@@ -235,17 +235,17 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
 
             # if there is a conflict
             if dist_intruder < self.minimum_separation:
-                reward = -5
+                reward = Config.conflict_penalty
 
                 # if there is a near-mid-air-collision
                 if dist_intruder < self.NMAC_dist:
-                    reward = -10
+                    reward = Config.NMAC_penalty
 
                 return reward
 
         # if ownship reaches goal
         if dist_goal < self.goal_radius:
-            return 10
+            return Config.goal_reward
 
         if Config.sparse_reward:
             return Config.step_penalty

@@ -140,6 +140,7 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
             s.append(self.intruder_list[i].position[1] / Config.window_height)
             s.append(normalize_velocity(self.intruder_list[i].velocity[0]))
             s.append(normalize_velocity(self.intruder_list[i].velocity[1]))
+            # s.append(dist(self.intruder_list[i], self.drone) / 1000)
         # #########################################################
 
         # all intruder aircraft ###################################

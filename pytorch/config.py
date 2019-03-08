@@ -33,9 +33,9 @@ class Config:
     max_steps = 1000
 
     # reward setting
-    NMAC_penalty = -10
-    conflict_penalty = -5
-    wall_penalty = -5
-    step_penalty = -0.01
-    goal_reward = 10
+    NMAC_penalty = -10       /10
+    conflict_penalty = -5       /10
+    wall_penalty = -5       /10
+    step_penalty = -0.01       /10
+    goal_reward = 10       /10
     sparse_reward = True

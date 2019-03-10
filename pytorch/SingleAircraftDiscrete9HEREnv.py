@@ -248,22 +248,23 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
         gy = new_inputs[-1] * Config.window_height
 
         dist_goal = metric(ownx, owny, gx, gy)
-
-        for idx in range(self.intruder_size):
-            intrux = new_inputs[idx * 4 + 6] * Config.window_width
-            intruy = new_inputs[idx * 4 + 7] * Config.window_height
-
-            dist_intruder = metric(ownx, owny, intrux, intruy)
-
-            # if there is a conflict
-            if dist_intruder < self.minimum_separation:
-                reward = Config.conflict_penalty
-
-                # if there is a near-mid-air-collision
-                if dist_intruder < self.NMAC_dist:
-                    reward = Config.NMAC_penalty
-
-                return reward
+        
+        if Config.intruder_size != 0:
+            for idx in range(Config.n):
+                intrux = new_inputs[idx * 4 + 4] * Config.window_width
+                intruy = new_inputs[idx * 4 + 5] * Config.window_height
+    
+                dist_intruder = metric(ownx, owny, intrux, intruy)
+    
+                # if there is a conflict
+                if dist_intruder < self.minimum_separation:
+                    reward = Config.conflict_penalty
+    
+                    # if there is a near-mid-air-collision
+                    if dist_intruder < self.NMAC_dist:
+                        reward = Config.NMAC_penalty
+    
+                    return reward
 
         # if ownship reaches goal
         if dist_goal < self.goal_radius:

@@ -29,9 +29,9 @@ class Agent():
         self.HER = HER
 
         # double network
-        self.local = QNetwork(state_size, action_size, ResBlock, [2, 2, 2]).to(device)
+        self.local = QNetwork(state_size, action_size, ResBlock, [2, 3, 4]).to(device)
         # move model to either gpu or cpu
-        self.target = QNetwork(state_size, action_size, ResBlock, [2, 2, 2]).to(device)
+        self.target = QNetwork(state_size, action_size, ResBlock, [2, 3, 4]).to(device)
         self.optimizer = optim.Adam(self.local.parameters(), lr=LEARNING_RATE)
 
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE)

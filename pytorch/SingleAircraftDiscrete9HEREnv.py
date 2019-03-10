@@ -30,7 +30,6 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
         self.viewer = None
 
         obs = self.reset()
-
         # build observation space and action space
         '''
         self.observation_space = spaces.Dict(dict(
@@ -40,8 +39,7 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
         ))
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float)
         '''
-        state_dimension = self.intruder_size * 4 + 8
-        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(state_dimension,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(obs['observation'].shape[0]+2,), dtype=np.float32)
         self.action_space = spaces.Discrete(9)
         self.position_range = spaces.Box(
             low=np.array([0, 0]),
@@ -114,22 +112,45 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
             return translation / (self.max_speed * 2)
 
         s = []
-        
+
+        # ownship information #####################################
         for i in range(1):
             # (x, y, vx, vy, speed, heading)
             s.append(self.drone.position[0] / Config.window_width)
             s.append(self.drone.position[1] / Config.window_height)
             s.append(normalize_velocity(self.drone.velocity[0]))
             s.append(normalize_velocity(self.drone.velocity[1]))
-            s.append((self.drone.speed - Config.min_speed) / (Config.max_speed - Config.min_speed))
-            s.append(self.drone.heading / (2 * math.pi))
-            
+            # s.append((self.drone.speed - Config.min_speed) / (Config.max_speed - Config.min_speed))
+            # s.append(self.drone.heading / (2 * math.pi))
+        # #########################################################
+
+        # n nearest aircraft ######################################
+        dist_list = []
         for aircraft in self.intruder_list:
+            dist_list.append(dist(aircraft, self.drone))
+
+        dist_array = np.array(dist_list)
+
+        ind = np.argpartition(dist_array, Config.n)[0:Config.n]
+        closest_ind = ind[np.argsort(dist_array[ind])]
+
+        for i in closest_ind:
             # (x, y, vx, vy)
-            s.append(aircraft.position[0] / Config.window_width)
-            s.append(aircraft.position[1] / Config.window_height)
-            s.append(normalize_velocity(aircraft.velocity[0]))
-            s.append(normalize_velocity(aircraft.velocity[1]))
+            s.append(self.intruder_list[i].position[0] / Config.window_width)
+            s.append(self.intruder_list[i].position[1] / Config.window_height)
+            s.append(normalize_velocity(self.intruder_list[i].velocity[0]))
+            s.append(normalize_velocity(self.intruder_list[i].velocity[1]))
+            # s.append(dist(self.intruder_list[i], self.drone) / 1000)
+        # #########################################################
+
+        # all intruder aircraft ###################################
+        # for aircraft in self.intruder_list:
+        #     # (x, y, vx, vy)
+        #     s.append(aircraft.position[0] / Config.window_width)
+        #     s.append(aircraft.position[1] / Config.window_height)
+        #     s.append(normalize_velocity(aircraft.velocity[0]))
+        #     s.append(normalize_velocity(aircraft.velocity[1]))
+        # #########################################################
 
         achieved_goal = np.array([self.drone.position[0] / Config.window_width,
                                   self.drone.position[1] / Config.window_height])
@@ -192,8 +213,8 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
             return Config.conflict_penalty, False, 'c'  # conflict
 
         # if ownship out of map
-        # if not self.position_range.contains(self.drone.position):
-        #     return Config.wall_penalty, True, 'w'  # out-of-map
+        if not self.position_range.contains(self.drone.position):
+            return Config.wall_penalty, True, 'w'  # out-of-map
 
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
@@ -235,17 +256,17 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
 
             # if there is a conflict
             if dist_intruder < self.minimum_separation:
-                reward = -5
+                reward = Config.conflict_penalty
 
                 # if there is a near-mid-air-collision
                 if dist_intruder < self.NMAC_dist:
-                    reward = -10
+                    reward = Config.NMAC_penalty
 
                 return reward
 
         # if ownship reaches goal
         if dist_goal < self.goal_radius:
-            return 10
+            return Config.goal_reward
 
         if Config.sparse_reward:
             return Config.step_penalty

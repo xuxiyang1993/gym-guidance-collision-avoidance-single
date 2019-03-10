@@ -2,7 +2,9 @@ import numpy as np
 import random
 from collections import namedtuple, deque
 
-from model import QNetwork
+# from model import QNetwork
+from res_model import ResBlock
+from res_model import QNetwork
 
 import torch
 import torch.nn.functional as F
@@ -27,9 +29,9 @@ class Agent():
         self.HER = HER
 
         # double network
-        self.local = QNetwork(state_size, action_size).to(device)
+        self.local = QNetwork(state_size, action_size, ResBlock, [2, 2, 2]).to(device)
         # move model to either gpu or cpu
-        self.target = QNetwork(state_size, action_size).to(device)
+        self.target = QNetwork(state_size, action_size, ResBlock, [2, 2, 2]).to(device)
         self.optimizer = optim.Adam(self.local.parameters(), lr=LEARNING_RATE)
 
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE)

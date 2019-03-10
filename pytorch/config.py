@@ -5,7 +5,7 @@ class Config:
     # input dim
     window_width = 800
     window_height = 800
-    intruder_size = 0
+    intruder_size = 10
     EPISODES = 1000
     G = 9.8
     tick = 30
@@ -39,3 +39,6 @@ class Config:
     step_penalty = -0.01
     goal_reward = 10
     sparse_reward = True
+
+    # n nearest intruder
+    n = 5

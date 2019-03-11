@@ -92,6 +92,8 @@ def main():
     args = parser.parse_args()
 
     env = SingleAircraftDiscrete9HEREnv()
+    print('state dimension:', env.observation_space.shape)
+    print('number of intruders:', env.intruder_size)
     agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n, HER=args.her)
 
     if args.train:

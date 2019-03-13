@@ -211,12 +211,14 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
         # if there is conflict
         if conflict:
             return Config.conflict_penalty, False, 'c'  # conflict
-
+        
+        '''
         # if ownship out of map
         if Config.sparse_reward:
             if not self.position_range.contains(self.drone.position):
                 return Config.wall_penalty, True, 'w'  # out-of-map
-
+        '''
+        
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:
             return Config.goal_reward, True, 'g'  # goal

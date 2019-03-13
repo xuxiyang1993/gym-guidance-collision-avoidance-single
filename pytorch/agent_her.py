@@ -3,8 +3,8 @@ import random
 from collections import namedtuple, deque
 
 # from model import QNetwork
-from res_model import ResBlock
-from res_model import QNetwork
+from res_light import ResBlock
+from res_light import QNetwork
 
 import torch
 import torch.nn.functional as F
@@ -29,9 +29,9 @@ class Agent():
         self.HER = HER
 
         # double network
-        self.local = QNetwork(state_size, action_size, ResBlock, [2, 2, 2]).to(device)
+        self.local = QNetwork(state_size, action_size, ResBlock, [2, 2, 3]).to(device)
         # move model to either gpu or cpu
-        self.target = QNetwork(state_size, action_size, ResBlock, [2, 2, 2]).to(device)
+        self.target = QNetwork(state_size, action_size, ResBlock, [2, 2, 3]).to(device)
         self.optimizer = optim.Adam(self.local.parameters(), lr=LEARNING_RATE)
 
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE)
@@ -103,7 +103,7 @@ class Agent():
                 for k in range(4):
                     future = np.random.randint(t, len(episode_experience))
                     _, _, _, g_n, _, _ = episode_experience[future]
-                    achieved = np.copy(new_ob[:2])
+                    # achieved = np.copy(new_ob[:2])
                     desired = np.copy(g_n[:2])
                     inputs = np.concatenate([ob, desired], axis=-1)
                     new_inputs = np.concatenate([new_ob, desired], axis=-1)

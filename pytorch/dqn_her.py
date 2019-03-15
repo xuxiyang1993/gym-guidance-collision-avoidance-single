@@ -4,6 +4,7 @@ import random
 from collections import deque
 import matplotlib.pyplot as plt
 from SingleAircraftDiscrete9HEREnv import SingleAircraftDiscrete9HEREnv
+from SingleAircraftDiscrete3HEREnv import SingleAircraftDiscrete3HEREnv
 from agent_her import Agent
 
 
@@ -91,7 +92,7 @@ def main():
     parser.add_argument('--save_path', '-s', type=str, default='save_model/checkpoint.pth')
     args = parser.parse_args()
 
-    env = SingleAircraftDiscrete9HEREnv()
+    env = SingleAircraftDiscrete3HEREnv()
     print('state dimension:', env.observation_space.shape)
     print('number of intruders:', env.intruder_size)
     agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n, HER=args.her)

@@ -140,7 +140,7 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
             s.append(self.intruder_list[i].position[1] / Config.window_height)
             s.append(normalize_velocity(self.intruder_list[i].velocity[0]))
             s.append(normalize_velocity(self.intruder_list[i].velocity[1]))
-            # s.append(dist(self.intruder_list[i], self.drone) / 1000)
+            s.append(dist(self.intruder_list[i], self.drone) / Config.diagonal)
         # #########################################################
 
         # all intruder aircraft ###################################
@@ -211,13 +211,11 @@ class SingleAircraftDiscrete9HEREnv(gym.GoalEnv):
         # if there is conflict
         if conflict:
             return Config.conflict_penalty, False, 'c'  # conflict
-        
-        '''
+
         # if ownship out of map
         if Config.sparse_reward:
             if not self.position_range.contains(self.drone.position):
                 return Config.wall_penalty, True, 'w'  # out-of-map
-        '''
         
         # if ownship reaches goal
         if dist(self.drone, self.goal) < self.goal_radius:

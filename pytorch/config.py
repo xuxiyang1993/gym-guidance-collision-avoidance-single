@@ -5,6 +5,7 @@ class Config:
     # input dim
     window_width = 800
     window_height = 800
+    diagonal = 800  # this one is used to normalize dist_to_intruder
     intruder_size = 20
     EPISODES = 1000
     G = 9.8
@@ -38,7 +39,7 @@ class Config:
     wall_penalty = -5
     step_penalty = -0.01
     goal_reward = 20
-    sparse_reward = False
+    sparse_reward = True
 
     # n nearest intruder
-    n = 6
+    n = 4

@@ -63,7 +63,7 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
 
 def evaluate(env, agent, load_path):
     agent.local.load_state_dict(torch.load(load_path))
-    for i in range(10):
+    for i in range(20):
         last_ob = env.reset()
         done = False
         episode_timestep = 0

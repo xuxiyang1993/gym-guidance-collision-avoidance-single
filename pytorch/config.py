@@ -23,7 +23,7 @@ class Config:
     min_speed = 50 / scale
     max_speed = 80 / scale
     d_speed = 5 / scale
-    speed_sigma = 2 / scale
+    speed_sigma = 0 / scale
     position_sigma = 0 / scale
 
     # heading in rad TBD

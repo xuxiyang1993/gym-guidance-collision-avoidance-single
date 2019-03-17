@@ -7,6 +7,8 @@ sys.path.extend(['../../../gym-guidance-collision-avoidance-single'])
 sys.path.extend(['../../Simulators'])
 from Simulators.SingleAircraftDiscrete3HEREnv import SingleAircraftDiscrete3HEREnv
 
+np.set_printoptions(precision=2)
+
 
 def train(env, agent, n_iterations, save_path):
     max_path_length = 1000
@@ -65,12 +67,11 @@ def train(env, agent, n_iterations, save_path):
 
         agent.train(paths)
         returns = [path["reward"].sum() for path in paths]
-        print("Time", time.time() - start_time)
-        print("Iteration", itr)
-        print("AverageReturn", np.mean(returns))
-        print("StdReturn", np.std(returns))
-        print("MaxReturn", np.max(returns))
-        print("MinReturn", np.min(returns))
+        print("Time", round(time.time() - start_time, 2))
+        print("AverageReturn", np.mean(returns).round(2))
+        print("StdReturn", np.std(returns).round(2))
+        print("MaxReturn", np.max(returns).round(2))
+        print("MinReturn", np.min(returns).round(2))
 
         if np.mean(returns) > best_score:
             best_score = np.mean(returns)

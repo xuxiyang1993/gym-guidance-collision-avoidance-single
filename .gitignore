@@ -4,4 +4,4 @@
 /logs
 /DDPGlogs
 *.ipynb
-/pytorch/save_model
+*/*/save_model

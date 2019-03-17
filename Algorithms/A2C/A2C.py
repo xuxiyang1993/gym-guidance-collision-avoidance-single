@@ -1,7 +1,5 @@
 import numpy as np
-import random
-from collections import deque
-import matplotlib.pyplot as plt
+import time
 
 from A2C_Agent import A2C_Agent
 import sys
@@ -15,11 +13,13 @@ def train(env, agent, n_iterations, save_path):
     min_timesteps_per_batch = 5000
     total_timesteps = 0
     num_path = 0
+    best_score = -1000
 
     for itr in range(n_iterations):
         print('=========== Iter %d ============' % itr)
 
         # collect samples (paths) until we have enough timesteps
+        start_time = time.time()
         timesteps_this_batch = 0
         paths = []
         while True:
@@ -64,6 +64,17 @@ def train(env, agent, n_iterations, save_path):
         total_timesteps += timesteps_this_batch
 
         agent.train(paths)
+        returns = [path["reward"].sum() for path in paths]
+        print("Time", time.time() - start_time)
+        print("Iteration", itr)
+        print("AverageReturn", np.mean(returns))
+        print("StdReturn", np.std(returns))
+        print("MaxReturn", np.max(returns))
+        print("MinReturn", np.min(returns))
+
+        if np.mean(returns) > best_score:
+            best_score = np.mean(returns)
+            agent.save('save_model/single_%.2f' %np.mean(returns))
 
     agent.save(save_path)
 
@@ -95,7 +106,7 @@ def main():
     parser.add_argument('--train', type=bool, default=False)
     parser.add_argument('--her', type=bool, default=False)
     parser.add_argument('--seed', type=int, default=101)
-    parser.add_argument('--save_path', '-s', type=str, default='save_model/checkpoint.pth')
+    parser.add_argument('--save_path', '-s', type=str, default='save_model/checkpoint')
     args = parser.parse_args()
 
     env = SingleAircraftDiscrete3HEREnv()

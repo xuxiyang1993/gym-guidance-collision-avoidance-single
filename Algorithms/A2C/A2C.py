@@ -74,7 +74,7 @@ def train(env, agent, n_iterations, save_path):
 
         if np.mean(returns) > best_score:
             best_score = np.mean(returns)
-            agent.save('save_model/single_%.2f' %np.mean(returns))
+            agent.save('save_model/single_%.2f.h5' %np.mean(returns))
 
     agent.save(save_path)
 
@@ -106,7 +106,7 @@ def main():
     parser.add_argument('--train', type=bool, default=False)
     parser.add_argument('--her', type=bool, default=False)
     parser.add_argument('--seed', type=int, default=101)
-    parser.add_argument('--save_path', '-s', type=str, default='save_model/checkpoint')
+    parser.add_argument('--save_path', '-s', type=str, default='save_model/ckpt.h5')
     args = parser.parse_args()
 
     env = SingleAircraftDiscrete3HEREnv()

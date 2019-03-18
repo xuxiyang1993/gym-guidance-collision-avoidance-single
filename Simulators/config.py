@@ -6,7 +6,7 @@ class Config:
     window_width = 800
     window_height = 800
     diagonal = 800  # this one is used to normalize dist_to_intruder
-    intruder_size = 0
+    intruder_size = 20
     EPISODES = 1000
     G = 9.8
     tick = 30
@@ -36,9 +36,9 @@ class Config:
     # reward setting
     NMAC_penalty = -10
     conflict_penalty = -5
-    wall_penalty = -1
+    wall_penalty = -5
     step_penalty = -0.01
-    goal_reward = 1
+    goal_reward = 20
     sparse_reward = True
 
     # n nearest intruder

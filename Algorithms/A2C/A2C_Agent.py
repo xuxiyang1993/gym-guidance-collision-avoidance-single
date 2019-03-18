@@ -70,19 +70,19 @@ class A2C_Agent:
 
         I = tf.keras.layers.Input(shape=(self.state_size,), name='states')
 
-        # dgoal, dintersection, route, speed, acceleration, radius
-        own_state = tf.keras.layers.Lambda(lambda x: x[:, :4], output_shape=(4,))(I)
+        # # dgoal, dintersection, route, speed, acceleration, radius
+        # own_state = tf.keras.layers.Lambda(lambda x: x[:, :4], output_shape=(4,))(I)
+        #
+        # # dgoal, dintersection, route, speed, acceleration, radius, downship,LOS
+        # # other_state = tf.keras.layers.Lambda(lambda x: x[:, 4:], output_shape=(self.state_size-4,))(I)
+        #
+        # # encoding other_state into 32 values
+        # H1_int = tf.keras.layers.Dense(32, activation='relu')(other_state)
+        #
+        # # now combine them
+        # combined = tf.keras.layers.concatenate([own_state, H1_int], axis=-1)
 
-        # dgoal, dintersection, route, speed, acceleration, radius, downship,LOS
-        other_state = tf.keras.layers.Lambda(lambda x: x[:, 4:], output_shape=(self.state_size-4,))(I)
-
-        # encoding other_state into 32 values
-        H1_int = tf.keras.layers.Dense(32, activation='relu')(other_state)
-
-        # now combine them
-        combined = tf.keras.layers.concatenate([own_state, H1_int], axis=-1)
-
-        H2 = tf.keras.layers.Dense(256, activation='relu')(combined)
+        H2 = tf.keras.layers.Dense(256, activation='relu')(I)
         H3 = tf.keras.layers.Dense(256, activation='relu')(H2)
 
         output = tf.keras.layers.Dense(self.action_size + 1, activation=None)(H3)
@@ -131,7 +131,7 @@ class A2C_Agent:
         adv_n = adv_n_baseline
         # print(adv_n.shape)
         # normalize advantage A
-        adv_n = (adv_n - adv_n.mean()) / adv_n.std()
+        # adv_n = (adv_n - adv_n.mean()) / adv_n.std()
         # print(adv_n.shape)
         # backprop the policy network
 

@@ -65,8 +65,7 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
     plt.show()
 
 
-def evaluate(env, agent, load_path):
-    agent.local.load_state_dict(torch.load(load_path))
+def evaluate(env, agent):
     for i in range(20):
         last_ob = env.reset()
         done = False
@@ -92,7 +91,8 @@ def main():
     parser.add_argument('--train', type=bool, default=False)
     parser.add_argument('--her', type=bool, default=False)
     parser.add_argument('--seed', type=int, default=101)
-    parser.add_argument('--save_path', '-s', type=str, default='save_model/checkpoint.pth')
+    parser.add_argument('--load_path', type=str)
+    parser.add_argument('--save_path', type=str, default='save_model/checkpoint.pth')
     args = parser.parse_args()
 
     env = SingleAircraftDiscrete3HEREnv()
@@ -100,10 +100,14 @@ def main():
     print('number of intruders:', env.intruder_size)
     agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n, HER=args.her)
 
+    if args.load_path:
+        agent.local.load_state_dict(torch.load(args.load_path))
+        print('model loaded successfully from %s' % args.load_path)
+
     if args.train:
         train(env, agent, n_episodes=args.episodes, save_path=args.save_path)
 
-    evaluate(env, agent, args.save_path)
+    evaluate(env, agent)
 
 
 if __name__ == '__main__':

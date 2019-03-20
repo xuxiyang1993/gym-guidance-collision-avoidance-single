@@ -1,10 +1,11 @@
 import numpy as np
+from numpy import newaxis
 import random
 from collections import namedtuple, deque
 
 # from model import QNetwork
-from res_light import ResBlock
-from res_light import QNetwork
+from res_conv1d import ResBlock
+from res_conv1d import QNetwork
 
 import torch
 import torch.nn.functional as F
@@ -29,9 +30,9 @@ class Agent():
         self.HER = HER
 
         # double network
-        self.local = QNetwork(state_size, action_size, ResBlock, [2, 2, 3]).to(device)
+        self.local = QNetwork(state_size, action_size, ResBlock, [6, 6, 6]).to(device)
         # move model to either gpu or cpu
-        self.target = QNetwork(state_size, action_size, ResBlock, [2, 2, 3]).to(device)
+        self.target = QNetwork(state_size, action_size, ResBlock, [6, 6, 6]).to(device)
         self.optimizer = optim.Adam(self.local.parameters(), lr=LEARNING_RATE)
 
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE)
@@ -50,6 +51,7 @@ class Agent():
 
     def act(self, state, epsilon=0.):
         '''Choose an action given state using epsilon-greedy'''
+        state = state.reshape(1, -1)
         state = torch.from_numpy(state).float().unsqueeze(0).to(device)
         self.local.eval()  # change model to evaluation mode
         with torch.no_grad():  # turn off gradient descent since evaluating
@@ -64,6 +66,8 @@ class Agent():
     def learn(self, experiences, gamma):
         '''learning from batch'''
         states, actions, rewards, next_states, dones = experiences
+        states = states.reshape(BATCH_SIZE, 1, -1)
+        next_states = next_states.reshape(BATCH_SIZE, 1, -1)
         # get the max predicted q value for next state
         q_target_next = self.target(next_states).detach().max(1)[0].unsqueeze(1)
         # detach the variable from the graph using detach()

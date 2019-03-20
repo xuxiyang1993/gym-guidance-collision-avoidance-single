@@ -12,7 +12,7 @@ np.set_printoptions(precision=2)
 
 def train(env, agent, n_iterations, save_path):
     max_path_length = 1000
-    min_timesteps_per_batch = 5000
+    min_timesteps_per_batch = 0
     total_timesteps = 0
     num_path = 0
     best_score = -1000
@@ -66,12 +66,16 @@ def train(env, agent, n_iterations, save_path):
         total_timesteps += timesteps_this_batch
 
         agent.train(paths)
+
         returns = [path["reward"].sum() for path in paths]
+        ep_lengths = [len(path['reward']) for path in paths]
+
         print("Time", round(time.time() - start_time, 2))
         print("AverageReturn", np.mean(returns).round(2))
-        print("StdReturn", np.std(returns).round(2))
-        print("MaxReturn", np.max(returns).round(2))
-        print("MinReturn", np.min(returns).round(2))
+        # print("StdReturn", np.std(returns).round(2))
+        # print("MaxReturn", np.max(returns).round(2))
+        # print("MinReturn", np.min(returns).round(2))
+        print("EpLenMean", np.mean(ep_lengths))
 
         if np.mean(returns) > best_score:
             best_score = np.mean(returns)

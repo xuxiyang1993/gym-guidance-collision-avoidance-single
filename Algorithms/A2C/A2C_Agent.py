@@ -42,7 +42,7 @@ class A2C_Agent:
         self.total_reward = 0
         self.batch_size = 32
 
-        self.lr = 0.0005
+        self.lr = 0.0001
 
         self.value_size = 1
 
@@ -82,8 +82,8 @@ class A2C_Agent:
         # # now combine them
         # combined = tf.keras.layers.concatenate([own_state, H1_int], axis=-1)
 
-        H2 = tf.keras.layers.Dense(256, activation='relu')(I)
-        H3 = tf.keras.layers.Dense(256, activation='relu')(H2)
+        H2 = tf.keras.layers.Dense(64, activation='relu')(I)
+        H3 = tf.keras.layers.Dense(64, activation='relu')(H2)
 
         output = tf.keras.layers.Dense(self.action_size + 1, activation=None)(H3)
 

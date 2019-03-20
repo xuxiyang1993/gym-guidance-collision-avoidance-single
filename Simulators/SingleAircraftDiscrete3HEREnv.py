@@ -122,6 +122,9 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
             s.append(normalize_velocity(self.drone.velocity[1]))
             # s.append((self.drone.speed - Config.min_speed) / (Config.max_speed - Config.min_speed))
             # s.append(self.drone.heading / (2 * math.pi))
+            dx, dy = self.goal.position - self.drone.position
+            desired_heading = math.atan2(dy, dx) / (2 * math.pi)
+            s.append(desired_heading)
         # #########################################################
 
         # n nearest aircraft ######################################

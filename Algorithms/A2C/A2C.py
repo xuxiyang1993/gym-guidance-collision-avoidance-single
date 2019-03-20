@@ -78,6 +78,7 @@ def train(env, agent, n_iterations, save_path):
             agent.save('save_model/single_%.2f.h5' %np.mean(returns))
 
     agent.save(save_path)
+    input('training finished, press enter to evaluate.')
 
 
 def evaluate(env, agent, load_path):

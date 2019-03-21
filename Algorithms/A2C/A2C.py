@@ -1,5 +1,7 @@
 import numpy as np
 import time
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
 
 from A2C_Agent import A2C_Agent
 import sys
@@ -8,6 +10,11 @@ sys.path.extend(['../../Simulators'])
 from Simulators.SingleAircraftDiscrete3HEREnv import SingleAircraftDiscrete3HEREnv
 
 np.set_printoptions(precision=2)
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+sess = tf.Session(config=config)
+set_session(sess)
 
 
 def train(env, agent, n_iterations, save_path):

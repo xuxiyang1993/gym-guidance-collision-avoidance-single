@@ -220,12 +220,14 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
         if dist(self.drone, self.goal) < self.goal_radius:
             return Config.goal_reward, True, 'g'  # goal
 
-        if Config.sparse_reward:
-            return Config.step_penalty + Config.conflict_coeff * dist_nearest_intruder, \
-                   False, ''
+        if dist_nearest_intruder < 3 * self.minimum_separation:
+            r = Config.conflict_coeff * dist_nearest_intruder
         else:
-            return -dist(self.drone, self.goal) / 1200 + Config.conflict_coeff * dist_nearest_intruder, \
-                   False, ''
+            r = 0
+        if Config.sparse_reward:
+            return Config.step_penalty + r, False, ''
+        else:
+            return -dist(self.drone, self.goal) / 1200 + r, False, ''
         
     def compute_reward(self, achieved_goal, desired_goal, info):
         achieved_goal = self.unnormalize_position(achieved_goal)

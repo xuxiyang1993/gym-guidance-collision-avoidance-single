@@ -122,9 +122,9 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
             s.append(normalize_velocity(self.drone.velocity[1]))
             # s.append((self.drone.speed - Config.min_speed) / (Config.max_speed - Config.min_speed))
             # s.append(self.drone.heading / (2 * math.pi))
-            dx, dy = self.goal.position - self.drone.position
-            desired_heading = math.atan2(dy, dx) / (2 * math.pi)
-            s.append(desired_heading)
+            # dx, dy = self.goal.position - self.drone.position
+            # desired_heading = math.atan2(dy, dx) / (2 * math.pi)
+            # s.append(desired_heading)
         # #########################################################
 
         # n nearest aircraft ######################################
@@ -180,11 +180,13 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
 
         # step the intruder aircraft
         conflict = False
+        dist_nearest_intruder = 9999
         # for each aircraft
         for idx in range(self.intruder_size):
             intruder = self.intruder_list[idx]
             intruder.position += intruder.velocity
             dist_intruder = dist(self.drone, intruder)
+            dist_nearest_intruder = min(dist_intruder, dist_nearest_intruder)
             # if this intruder out of map
             if not self.position_range.contains(intruder.position):
                 self.intruder_list[idx] = self.reset_intruder()
@@ -219,9 +221,11 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
             return Config.goal_reward, True, 'g'  # goal
 
         if Config.sparse_reward:
-            return Config.step_penalty, False, ''
+            return Config.step_penalty + Config.conflict_coeff * dist_nearest_intruder, \
+                   False, ''
         else:
-            return -dist(self.drone, self.goal) / 1200, False, ''
+            return -dist(self.drone, self.goal) / 1200 + Config.conflict_coeff * dist_nearest_intruder, \
+                   False, ''
         
     def compute_reward(self, achieved_goal, desired_goal, info):
         achieved_goal = self.unnormalize_position(achieved_goal)

@@ -40,6 +40,7 @@ class Config:
     step_penalty = -0.01
     goal_reward = 20
     sparse_reward = True
+    conflict_coeff = 0.1
 
     # n nearest intruder
     n = 4

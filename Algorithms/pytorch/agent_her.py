@@ -4,8 +4,8 @@ import random
 from collections import namedtuple, deque
 
 # from model import QNetwork
-from res_conv1d import ResBlock
-from res_conv1d import QNetwork
+from res_light import ResBlock
+from res_light import QNetwork
 
 import torch
 import torch.nn.functional as F

@@ -51,7 +51,7 @@ class Agent():
 
     def act(self, state, epsilon=0.):
         '''Choose an action given state using epsilon-greedy'''
-        state = state.reshape(1, -1)
+        # state = state.reshape(1, -1)
         state = torch.from_numpy(state).float().unsqueeze(0).to(device)
         self.local.eval()  # change model to evaluation mode
         with torch.no_grad():  # turn off gradient descent since evaluating
@@ -66,8 +66,8 @@ class Agent():
     def learn(self, experiences, gamma):
         '''learning from batch'''
         states, actions, rewards, next_states, dones = experiences
-        states = states.reshape(BATCH_SIZE, 1, -1)
-        next_states = next_states.reshape(BATCH_SIZE, 1, -1)
+        # states = states.reshape(BATCH_SIZE, 1, -1)
+        # next_states = next_states.reshape(BATCH_SIZE, 1, -1)
         # get the max predicted q value for next state
         q_target_next = self.target(next_states).detach().max(1)[0].unsqueeze(1)
         # detach the variable from the graph using detach()

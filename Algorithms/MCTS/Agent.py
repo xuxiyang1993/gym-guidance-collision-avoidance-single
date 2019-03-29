@@ -1,6 +1,9 @@
 import argparse
 import time
 
+import sys
+sys.path.extend(['../../../gym-guidance-collision-avoidance-single'])
+sys.path.extend(['../../Simulators'])
 from nodes_single import SingleAircraftNode, SingleAircraftState
 from search_single import MCTS
 from gym_guidance_collision_avoidance_single.envs.SingleAircraftEnv import SingleAircraftEnv

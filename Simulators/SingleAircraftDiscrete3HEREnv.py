@@ -174,19 +174,20 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
 
         reward, terminal, info = self._terminal_reward()
 
+        return self._get_ob(), reward, terminal, self.dist_nearest_intruder
         return self._get_ob(), reward, terminal, {'result': info}
 
     def _terminal_reward(self):
 
         # step the intruder aircraft
         conflict = False
-        dist_nearest_intruder = 9999
+        self.dist_nearest_intruder = 9999
         # for each aircraft
         for idx in range(self.intruder_size):
             intruder = self.intruder_list[idx]
             intruder.position += intruder.velocity
             dist_intruder = dist(self.drone, intruder)
-            dist_nearest_intruder = min(dist_intruder, dist_nearest_intruder)
+            self.dist_nearest_intruder = min(dist_intruder, self.dist_nearest_intruder)
             # if this intruder out of map
             if not self.position_range.contains(intruder.position):
                 self.intruder_list[idx] = self.reset_intruder()
@@ -220,8 +221,8 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
         if dist(self.drone, self.goal) < self.goal_radius:
             return Config.goal_reward, True, 'g'  # goal
 
-        if dist_nearest_intruder < 3 * self.minimum_separation:
-            r = Config.conflict_coeff * dist_nearest_intruder
+        if self.dist_nearest_intruder < 3 * self.minimum_separation:
+            r = Config.conflict_coeff * self.dist_nearest_intruder
         else:
             r = 0
         if Config.sparse_reward:

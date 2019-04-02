@@ -40,7 +40,16 @@ class Config:
     step_penalty = -0.01
     goal_reward = 20
     sparse_reward = True
-    conflict_coeff = 0.002
+    conflict_coeff = 0.00025
+
+    # Jonathan How R
+    # NMAC_penalty = -1
+    # conflict_penalty = -0.5
+    # wall_penalty = -1
+    # step_penalty = 0
+    # goal_reward = 1
+    # sparse_reward = True
+    # conflict_coeff = 0.00025
 
     # n nearest intruder
     n = 4

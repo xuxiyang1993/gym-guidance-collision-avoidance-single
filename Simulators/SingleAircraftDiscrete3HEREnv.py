@@ -96,7 +96,7 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
             self.intruder_list.append(intruder)
 
         # generate a random goal
-        self.goal = Goal(position=self.random_pos())
+        self.goal = Goal(position=self.random_goal_pos())
 
         # reset the number of conflicts to 0
         self.no_conflict = 0
@@ -343,6 +343,12 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
         return np.random.uniform(
             low=np.array([0, 0]),
             high=np.array([self.window_width, self.window_height])
+        )
+
+    def random_goal_pos(self):
+        return np.random.uniform(
+            low=np.array([100, 100]),
+            high=np.array([self.window_width - 100, self.window_height - 100])
         )
 
     def random_speed(self):

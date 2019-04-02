@@ -76,7 +76,7 @@ def evaluate(env, agent):
             state = last_ob['observation']
             goal = last_ob['desired_goal']
 
-            if info > 4 * env.minimum_separation:
+            if info > 2 * env.minimum_separation:
                 inputs = np.concatenate([state[0:4], goal], axis=-1)
                 action = agent.act_G(inputs)
             else:

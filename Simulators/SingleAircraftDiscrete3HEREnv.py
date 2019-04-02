@@ -222,7 +222,7 @@ class SingleAircraftDiscrete3HEREnv(gym.GoalEnv):
             return Config.goal_reward, True, 'g'  # goal
 
         if self.dist_nearest_intruder < 3 * self.minimum_separation:
-            r = Config.conflict_coeff * self.dist_nearest_intruder
+            r = Config.conflict_coeff * self.dist_nearest_intruder - 0.1
         else:
             r = 0
         if Config.sparse_reward:

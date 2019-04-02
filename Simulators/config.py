@@ -34,22 +34,22 @@ class Config:
     max_steps = 1000
 
     # reward setting
-    NMAC_penalty = -10
-    conflict_penalty = -5
-    wall_penalty = -5
-    step_penalty = -0.01
-    goal_reward = 20
-    sparse_reward = True
-    conflict_coeff = 0.00025
-
-    # Jonathan How R
-    # NMAC_penalty = -1
-    # conflict_penalty = -0.5
-    # wall_penalty = -1
-    # step_penalty = 0
-    # goal_reward = 1
+    # NMAC_penalty = -10
+    # conflict_penalty = -5
+    # wall_penalty = -5
+    # step_penalty = -0.01
+    # goal_reward = 20
     # sparse_reward = True
     # conflict_coeff = 0.00025
+
+    # Jonathan How R
+    NMAC_penalty = -1
+    conflict_penalty = -0.5
+    wall_penalty = -1
+    step_penalty = 0
+    goal_reward = 1
+    sparse_reward = True
+    conflict_coeff = 0.001
 
     # n nearest intruder
     n = 4

@@ -27,16 +27,17 @@ OrderedDict([('achieved_goal', Box),
 
 The action space is continuous.
 
-## SingleAircraftDiscreteHEREnv
-The environment designed to implement Hindsight Experience Replay algorithm with discrete action space.
+## SingleAircraftDiscrete3HEREnv, SingleAircraftDiscrete9HEREnv
+The environment designed to implement Hindsight Experience Replay algorithm with 3/9 discrete actions.
 
-
+<!--
 ## Installation
 
 ```bash
 cd gym-guidance-collision-avoidance-single
 pip install -e .
 ```
+-->
 
 # OpenAI baselines
 

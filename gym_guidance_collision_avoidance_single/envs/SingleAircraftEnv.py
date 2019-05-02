@@ -4,7 +4,9 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 
-from .config import Config
+import sys
+sys.path.extend(['../../../gym-guidance-collision-avoidance-single'])
+from gym_guidance_collision_avoidance_single.envs.config import Config
 
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 

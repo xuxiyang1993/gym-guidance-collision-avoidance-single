@@ -25,14 +25,19 @@ def train(env, agent, n_episodes=30000, eps_start=1.0, eps_end=0.01, decay=0.999
         total_reward = 0
         done = False
 
-        while not done and episode_timestep < 1000:
+        while not done and episode_timestep < 200:
             # env.render()
             observation = np.copy(last_ob['observation'])
             desired_goal = np.copy(last_ob['desired_goal'])
             inputs = np.concatenate([observation, desired_goal], axis=-1)
             episode_timestep += 1
             action = agent.act(inputs, epsilon)
-            new_ob, reward, done, _ = env.step(action)
+
+            for ___ in range(5):
+                new_ob, reward, done, _ = env.step(action)
+                if done:
+                    break
+
             new_observation = np.copy(new_ob['observation'])
             agent.step()
             episode_experience.append((observation, action, reward, new_observation, desired_goal, done))

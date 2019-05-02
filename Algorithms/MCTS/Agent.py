@@ -6,7 +6,7 @@ sys.path.extend(['../../../gym-guidance-collision-avoidance-single'])
 sys.path.extend(['../../Simulators'])
 from nodes_single import SingleAircraftNode, SingleAircraftState
 from search_single import MCTS
-from gym_guidance_collision_avoidance_single.envs.SingleAircraftEnv import SingleAircraftEnv
+from Simulators.SingleAircraftMCTSEnv import SingleAircraftEnv
 
 
 def run_experiment(env, no_episodes, no_simulations, search_depth):
@@ -27,6 +27,7 @@ def run_experiment(env, no_episodes, no_simulations, search_depth):
 
         while not done:
             # at each time step
+            env.render()
             episode_time_step += 1
 
             if episode_time_step % 5 == 0:
@@ -69,7 +70,7 @@ def main():
     parser.add_argument('--config_path', '-cf', type=str, default='config/config_file.ini')
     args = parser.parse_args()
 
-    env = SingleAircraftEnv(args.config_path)
+    env = SingleAircraftEnv()
     run_experiment(env, args.no_episodes, args.no_simulations, args.search_depth)
 
 

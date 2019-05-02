@@ -111,7 +111,7 @@ def main():
     agent = Agent(state_size=env.observation_space.shape[0], action_size=env.action_space.n, HER=args.her)
 
     if args.load_path:
-        agent.CA_net.load_state_dict(torch.load('save_model/normal_sparse_20_wall_4near_4ownship_dist_HowR.pth'))
+        agent.CA_net.load_state_dict(torch.load('save_model/CA_net_normal.pth'))
         print('CA model loaded successfully')
         agent.G_net.load_state_dict(torch.load('save_model/her_goal_sparse.pth'))
         print('G model loaded successfully')

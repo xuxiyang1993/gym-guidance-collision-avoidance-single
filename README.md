@@ -69,5 +69,6 @@ More optional can be found in the documentation of OpenAI baselines repository.
 Use Monte Carlo Tree Search Algorithm to solve this problem. Details can be found at the above reference. Run
 
 ```bash
+cd Algorithms/MCTS
 python Agent.py
 ```

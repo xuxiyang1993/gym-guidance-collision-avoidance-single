@@ -108,8 +108,8 @@ class SingleAircraftEnv(gym.Env):
             # (x, y, vx, vy)
             s.append(aircraft.position[0])
             s.append(aircraft.position[1])
-            s.append(self.drone.velocity[0])
-            s.append(self.drone.velocity[1])
+            s.append(aircraft.velocity[0])
+            s.append(aircraft.velocity[1])
         for i in range(1):
             # (x, y, vx, vy, speed, heading)
             s.append(self.drone.position[0])

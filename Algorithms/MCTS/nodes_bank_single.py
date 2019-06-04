@@ -46,7 +46,7 @@ class SingleAircraftState(MCTSState):
         reach_goal = False
         near_intruders_size = (len(state) - 9) // 4
 
-        d_heading = (action[0] - 1) * self.config.d_heading
+        delta_bank = (action[0] - 1) * self.config.d_bank
         acceleration = (action[1] - 1) * self.config.d_speed
 
         for _ in range(self.config.simulate_frame):
@@ -56,23 +56,28 @@ class SingleAircraftState(MCTSState):
                 state[4 * i + 0] += state[4 * i + 2] + np.random.normal(0, self.config.position_sigma)
                 state[4 * i + 1] += state[4 * i + 3] + np.random.normal(0, self.config.position_sigma)
 
-            state[-4] += acceleration  # update speed according to acceleration
-            state[-4] = max(self.config.min_speed, min(state[-5], self.config.max_speed))
-            state[-4] += np.random.normal(0, self.config.speed_sigma)
-            speed = state[-4]
-            state[-3] += d_heading # update bank angle according to delta bank
-            state[-3] += np.random.normal(0, self.config.heading_sigma)
-            heading = state[-3]
+            state[-5] += acceleration  # update speed according to acceleration
+            state[-5] = max(self.config.min_speed, min(state[-5], self.config.max_speed))
+            state[-5] += np.random.normal(0, self.config.speed_sigma)
+            speed = state[-5]
+            state[-3] += delta_bank  # update bank angle according to delta bank
+            state[-3] = max(self.config.min_bank, min(state[-3], self.config.max_bank))
+            state[-3] += np.random.normal(0, self.config.bank_sigma)
+            bank = state[-3]
+            delta_direction = self.bank_to_heading(bank, speed)
+            state[-4] += delta_direction
+            heading = state[-4]
 
-            ownvx = speed * math.cos(heading)
-            ownvy = speed * math.sin(heading)
-            state[-8] += ownvx
-            ownx = state[-8]
-            state[-7] += ownvy
-            owny = state[-7]
+            rad = math.radians(heading)
+            ownvx = -speed * math.sin(rad)
+            ownvy = -speed * math.cos(rad)
+            state[-9] += ownvx
+            ownx = state[-9]
+            state[-8] += ownvy
+            owny = state[-8]
 
-            state[-6] = ownvx
-            state[-5] = ownvy
+            state[-7] = ownvx
+            state[-6] = ownvy
 
             goalx = state[-2]
             goaly = state[-1]
@@ -102,6 +107,11 @@ class SingleAircraftState(MCTSState):
     def get_legal_actions(self):
         return list(itertools.product(range(3), repeat=2))
 
+    def bank_to_heading(self, bank, speed):
+        direction = self.G * math.tan(math.radians(bank)) / (self.scale * float(speed))
+
+        return math.degrees(direction)
+
     def dist_goal(self):
         dx = self.ownx - self.goalx
         dy = self.owny - self.goaly
@@ -127,26 +137,14 @@ class SingleAircraftState(MCTSState):
 
     @property
     def ownx(self):
-        return self.state[-8]
+        return self.state[-9]
 
     @property
     def owny(self):
-        return self.state[-7]
+        return self.state[-8]
 
     @property
-    def own_vx(self):
-        return self.state[-6]
-
-    @property
-    def own_vy(self):
-        return self.state[-5]
-
-    @property
-    def own_speed(self):
-        return self.state[-4]
-
-    @property
-    def own_heading(self):
+    def own_bank(self):
         return self.state[-3]
 
     @property

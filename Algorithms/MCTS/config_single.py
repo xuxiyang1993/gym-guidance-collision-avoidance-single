@@ -1,34 +1,64 @@
-import os
-from configparser import ConfigParser
+import math
 
 
 class Config:
-    def __init__(self):
-        self.config_path = 'config/config_file.ini'
-        parser = ConfigParser(os.environ)
-        parser.read(self.config_path)
-        # input dim
-        self.window_width = parser.getint('simulator', 'width')
-        self.window_height = parser.getint('simulator', 'height')
-        self.intruder_size = parser.getint('simulator', 'intruder_size')
-        self.EPISODES = parser.getint('simulator', 'EPISODES')
-        self.G = parser.getfloat('simulator', 'G')
-        self.tick = parser.getint('simulator', 'tick')
-        self.scale = parser.getint('simulator', 'SCALE')
-        self.minimum_separation = parser.getint('simulator', 'minimum_separation')/self.scale
-        self.NMAC_dist = parser.getint('simulator', 'NMAC_dist')/self.scale
-        self.horizon_dist = parser.getint('simulator', 'horizon_dist')/self.scale
-        self.initial_min_dist = parser.getint('simulator', 'initial_min_dist')/self.scale
-        self.goal_radius = parser.getint('simulator', 'goal_radius')/self.scale
-        self.min_speed = parser.getint('aircraft_model', 'min_speed')/self.scale
-        self.max_speed = parser.getint('aircraft_model', 'max_speed')/self.scale
-        self.d_speed = parser.getint('aircraft_model', 'd_speed') / self.scale
-        self.speed_sigma = parser.getint('uncertainty', 'speed_sigma') / self.scale
-        self.position_sigma = parser.getint('uncertainty', 'position_sigma') / self.scale
+    # input dim
+    window_width = 800
+    window_height = 800
+    diagonal = 800  # this one is used to normalize dist_to_intruder
+    intruder_size = 20
+    EPISODES = 1000
+    G = 9.8
+    tick = 30
+    scale = 30
 
-        self.min_bank = parser.getint('aircraft_model', 'min_bank')
-        self.max_bank = parser.getint('aircraft_model', 'max_bank')
-        self.d_bank = parser.getint('aircraft_model', 'd_bank')
-        self.bank_sigma = parser.getint('uncertainty', 'bank_sigma')
+    # distance param
+    minimum_separation = 555 / scale
+    NMAC_dist = 150 / scale
+    horizon_dist = 4000 / scale
+    initial_min_dist = 3000 / scale
+    goal_radius = 600 / scale
 
-        self.simulate_frame = parser.getint('algorithm', 'simulate_frame')
+    # speed
+    min_speed = 50 / scale
+    max_speed = 80 / scale
+    d_speed = 5 / scale
+    speed_sigma = 0 / scale
+    position_sigma = 0 / scale
+
+    # heading in rad TBD
+    d_heading = math.radians(5)
+    heading_sigma = math.radians(2)
+
+    # maximum steps of one episode
+    max_steps = 1000
+
+    # reward setting
+    NMAC_penalty = -10 / 10
+    conflict_penalty = -5 / 10
+    wall_penalty = -5 / 10
+    step_penalty = -0.01 / 10
+    goal_reward = 10 / 10
+    sparse_reward = False
+    conflict_coeff = 0.00025
+
+    # Jonathan How R
+    # NMAC_penalty = -1
+    # conflict_penalty = -0.5
+    # wall_penalty = -1
+    # step_penalty = 0
+    # goal_reward = 1
+    # sparse_reward = True
+    # conflict_coeff = 0.001
+
+    # n nearest intruder
+    n = 4
+
+    # MCTS algorithm
+    update_frame = 5
+    simulate_frame = 10
+    no_simulation = 100
+    search_depth = 3
+    # exploration-exploitation term, better keep fixed
+    # C = 1/sqrt(2.0)
+    C = 0.70710678118

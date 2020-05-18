@@ -1,4 +1,4 @@
-from nodes_single import SingleAircraftNode
+from nodes_single_randintru import SingleAircraftNode
 
 
 class MCTS:

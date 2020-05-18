@@ -4,7 +4,7 @@ import time
 import sys
 sys.path.extend(['../../../gym-guidance-collision-avoidance-single'])
 sys.path.extend(['../../Simulators'])
-from nodes_single import SingleAircraftNode, SingleAircraftState
+from nodes_single_randintru import SingleAircraftNode, SingleAircraftState
 from search_single import MCTS
 from Simulators.SingleAircraftMCTSRandIntruderEnv import SingleAircraftEnv
 

@@ -5,3 +5,4 @@
 /DDPGlogs
 *.ipynb
 */*/save_model
+*.DS_Store

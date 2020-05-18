@@ -60,6 +60,7 @@ class SingleAircraftEnv(gym.Env):
         self.goal_radius = Config.goal_radius
         self.min_speed = Config.min_speed
         self.max_speed = Config.max_speed
+        self.d_heading = Config.d_heading
 
     def reset(self):
         # ownship = recordtype('ownship', ['position', 'velocity', 'speed', 'heading', 'bank'])
@@ -131,7 +132,19 @@ class SingleAircraftEnv(gym.Env):
 
         reward, terminal, info = self._terminal_reward()
 
+        self._update_headings()
+
         return self._get_ob(), reward, terminal, {'result': info}
+
+    def _update_headings(self):
+        # With some small probability 'p', have each intruder change it's heading
+        for i in range(self.intruder_size):
+            p = np.random.uniform()
+            if p < .1:
+                # print( 'hdg change')
+                delta_hdg = np.random.uniform(-self.d_heading, self.d_heading)
+                # delta_hdg = math.radians(np.random.uniform(-25, 25))
+                self.intruder_list[i].change_heading(delta_hdg)
 
     def _terminal_reward(self):
 
@@ -273,6 +286,11 @@ class Aircraft:
 
         self.conflict = False  # track if this aircraft is in conflict with ownship
 
+    def change_heading(self, delta_heading):  # in rad
+        self.heading = self.heading + delta_heading  # rad
+        vx = self.speed * math.cos(self.heading)
+        vy = self.speed * math.sin(self.heading)
+        self.velocity = np.array([vx, vy], dtype=np.float32)
 
 class Ownship(Aircraft):
     def __init__(self, position, speed, heading):

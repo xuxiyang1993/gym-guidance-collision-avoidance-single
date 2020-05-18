@@ -13,6 +13,7 @@ def run_experiment(env, no_episodes, no_simulations, search_depth):
     episode = 0
     epi_returns = []
     running_time_list = []
+    conflicts = []
 
     while episode < no_episodes:
         # at the beginning of each episode, set done to False, set time step in this episode to 0
@@ -48,18 +49,18 @@ def run_experiment(env, no_episodes, no_simulations, search_depth):
 
         # print training information for each training episode
         epi_returns.append(info)
+        conflicts.append(env.no_conflict)
         print('Training Episode:', episode)
-        print('Cumulative Reward:', episode_reward)
 
+    env.close()
     print('----------------------------------------')
-    print('intruders: ', 80)
+    # print('intruders: ', 80)
     print('search depth: ', search_depth)
     print('simulation: ', no_simulations)
     print('time: ', sum(running_time_list) / float(len(running_time_list)))
-    print('Number of conflicts: ', 999)
     print('NMAC prob: ', epi_returns.count('n') / no_episodes)
     print('goal prob: ', epi_returns.count('g') / no_episodes)
-    print('average conflicts: ', 999 / no_episodes)
+    print('average conflicts: ', sum(conflicts) / no_episodes)
 
 
 def main():

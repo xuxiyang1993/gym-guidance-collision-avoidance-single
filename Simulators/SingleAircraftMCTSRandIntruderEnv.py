@@ -61,6 +61,7 @@ class SingleAircraftEnv(gym.Env):
         self.min_speed = Config.min_speed
         self.max_speed = Config.max_speed
         self.d_heading = Config.d_heading
+        self.position_sigma = Config.position_sigma
 
     def reset(self):
         # ownship = recordtype('ownship', ['position', 'velocity', 'speed', 'heading', 'bank'])
@@ -97,7 +98,7 @@ class SingleAircraftEnv(gym.Env):
         return self._get_ob()
 
     def _get_ob(self):
-        # state contains pos, vel for all intruder aircraft
+        # state contains pos, vel, heading for all intruder aircraft
         # pos, vel, speed, heading for ownship
         # goal pos
         def normalize_velocity(velocity):
@@ -106,11 +107,13 @@ class SingleAircraftEnv(gym.Env):
 
         s = []
         for aircraft in self.intruder_list:
-            # (x, y, vx, vy)
+            # (x, y, vx, vy, speed, heading)
             s.append(aircraft.position[0])
             s.append(aircraft.position[1])
             s.append(aircraft.velocity[0])
             s.append(aircraft.velocity[1])
+            s.append(aircraft.speed)
+            s.append(aircraft.heading)
         for i in range(1):
             # (x, y, vx, vy, speed, heading)
             s.append(self.drone.position[0])
@@ -142,8 +145,8 @@ class SingleAircraftEnv(gym.Env):
             p = np.random.uniform()
             if p < .1:
                 # print( 'hdg change')
-                delta_hdg = np.random.uniform(-self.d_heading, self.d_heading)
-                # delta_hdg = math.radians(np.random.uniform(-25, 25))
+                # delta_hdg = np.random.uniform(-self.d_heading, self.d_heading)
+                delta_hdg = math.radians(np.random.uniform(-10, 10))
                 self.intruder_list[i].change_heading(delta_hdg)
 
     def _terminal_reward(self):
@@ -153,7 +156,7 @@ class SingleAircraftEnv(gym.Env):
         # for each aircraft
         for idx in range(self.intruder_size):
             intruder = self.intruder_list[idx]
-            intruder.position += intruder.velocity
+            intruder.position += intruder.velocity + self.position_sigma
             dist_intruder = dist(self.drone, intruder)
             # if this intruder out of map
             if not self.position_range.contains(intruder.position):

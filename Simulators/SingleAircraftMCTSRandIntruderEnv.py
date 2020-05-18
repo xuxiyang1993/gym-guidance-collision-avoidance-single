@@ -8,6 +8,24 @@ from config import Config
 
 __author__ = "Xuxi Yang <xuxiyang@iastate.edu>"
 
+import pyglet
+import pyglet.gl as gl
+from gym.envs.classic_control import rendering
+class Points(rendering.Geom):
+    def __init__(self,v):
+        self.v = v
+        print( 'len: ', len(self.v) )
+        rendering.Geom.__init__(self)
+    def render1(self):
+        gl.glPointSize(2.0)
+        gl.glEnable(gl.GL_POINT_SMOOTH)
+        gl.glBegin(gl.GL_POINTS) # draw point
+        for p in self.v:
+            print( '    p: ', p )
+            gl.glVertex3f(p[0], p[1], 0)
+        gl.glEnd()
+        gl.glDisable(gl.GL_POINT_SMOOTH)
+
 
 class SingleAircraftEnv(gym.Env):
     """
@@ -39,6 +57,13 @@ class SingleAircraftEnv(gym.Env):
             dtype=np.float32)
 
         self.seed(2)
+
+        self.own_hist = []
+        self.int_hist = []
+
+        for i in range(self.intruder_size):
+            self.int_hist.append( [] )
+        
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -215,6 +240,8 @@ class SingleAircraftEnv(gym.Env):
         ownship_img.set_color(255, 241, 4)  # set it to yellow
         self.viewer.onetime_geoms.append(ownship_img)
 
+        self.own_hist.append( self.drone.position )
+
         # draw goal
         goal_img = rendering.Image(os.path.join(__location__, 'images/goal.png'), 32, 32)
         jtransform = rendering.Transform(rotation=0, translation=self.goal.position)
@@ -222,13 +249,26 @@ class SingleAircraftEnv(gym.Env):
         goal_img.set_color(15, 210, 81)  # green
         self.viewer.onetime_geoms.append(goal_img)
 
+         
         # draw intruders
-        for aircraft in self.intruder_list:
+        for i, aircraft in enumerate(self.intruder_list):
             intruder_img = rendering.Image(os.path.join(__location__, 'images/intruder.png'), 32, 32)
             jtransform = rendering.Transform(rotation=aircraft.heading - math.pi / 2, translation=aircraft.position)
             intruder_img.add_attr(jtransform)
             intruder_img.set_color(237, 26, 32)  # red color
             self.viewer.onetime_geoms.append(intruder_img)
+
+            self.int_hist[ i ].append( aircraft.position )
+
+        #print( np.array( self.own_hist ) )
+        #print( np.array( self.int_hist ) )
+
+        hist_pt = Points( self.own_hist )
+        self.viewer.onetime_geoms.append(hist_pt)
+
+        for i, aircraft in enumerate(self.intruder_list):
+            hist_pt = Points( self.int_hist[i] )
+            self.viewer.onetime_geoms.append(hist_pt)
 
         return self.viewer.render(return_rgb_array=False)
 

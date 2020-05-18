@@ -9,7 +9,7 @@ from search_single import MCTS
 from Simulators.SingleAircraftMCTSRandIntruderEnv import SingleAircraftEnv
 
 
-def run_experiment(env, no_episodes, no_simulations, search_depth):
+def run_experiment(env, no_episodes, no_simulations, search_depth, render):
     episode = 0
     epi_returns = []
     running_time_list = []
@@ -28,7 +28,8 @@ def run_experiment(env, no_episodes, no_simulations, search_depth):
 
         while not done:
             # at each time step
-            env.render()
+            if render:
+                env.render()
             episode_time_step += 1
 
             if episode_time_step % 5 == 0:
@@ -50,7 +51,8 @@ def run_experiment(env, no_episodes, no_simulations, search_depth):
         # print training information for each training episode
         epi_returns.append(info)
         conflicts.append(env.no_conflict)
-        print('Training Episode:', episode)
+        print('Episode:', episode)
+        print('Conflicts:', env.no_conflict)
 
     env.close()
     print('----------------------------------------')
@@ -69,10 +71,11 @@ def main():
     parser.add_argument('--no_simulations', '-s', type=int, default=100)
     parser.add_argument('--search_depth', '-d', type=int, default=3)
     parser.add_argument('--config_path', '-cf', type=str, default='config/config_file.ini')
+    parser.add_argument('--render', '-r', action='store_true')
     args = parser.parse_args()
 
     env = SingleAircraftEnv()
-    run_experiment(env, args.no_episodes, args.no_simulations, args.search_depth)
+    run_experiment(env, args.no_episodes, args.no_simulations, args.search_depth, args.render)
 
 
 if __name__ == '__main__':

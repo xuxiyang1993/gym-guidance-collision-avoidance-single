@@ -14,14 +14,14 @@ from gym.envs.classic_control import rendering
 class Points(rendering.Geom):
     def __init__(self,v):
         self.v = v
-        print( 'len: ', len(self.v) )
+        #print( 'len: ', len(self.v) )
         rendering.Geom.__init__(self)
     def render1(self):
         gl.glPointSize(2.0)
         gl.glEnable(gl.GL_POINT_SMOOTH)
         gl.glBegin(gl.GL_POINTS) # draw point
         for p in self.v:
-            print( '    p: ', p )
+            #print( '    p: ', p )
             gl.glVertex3f(p[0], p[1], 0)
         gl.glEnd()
         gl.glDisable(gl.GL_POINT_SMOOTH)
@@ -240,7 +240,7 @@ class SingleAircraftEnv(gym.Env):
         ownship_img.set_color(255, 241, 4)  # set it to yellow
         self.viewer.onetime_geoms.append(ownship_img)
 
-        self.own_hist.append( self.drone.position )
+        self.own_hist.append( self.drone.position.copy() )
 
         # draw goal
         goal_img = rendering.Image(os.path.join(__location__, 'images/goal.png'), 32, 32)
@@ -258,7 +258,7 @@ class SingleAircraftEnv(gym.Env):
             intruder_img.set_color(237, 26, 32)  # red color
             self.viewer.onetime_geoms.append(intruder_img)
 
-            self.int_hist[ i ].append( aircraft.position )
+            self.int_hist[ i ].append( aircraft.position.copy() )
 
         #print( np.array( self.own_hist ) )
         #print( np.array( self.int_hist ) )

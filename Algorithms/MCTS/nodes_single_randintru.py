@@ -96,8 +96,8 @@ class SingleAircraftState(MCTSState):
                 break
 
             for i in range(near_intruders_size):
-                x = state[4 * i + 0]
-                y = state[4 * i + 1]
+                x = state[6 * i + 0]
+                y = state[6 * i + 1]
                 if self.metric(x, y, ownx, owny) < self.config.minimum_separation:
                     conflict = True
                     # who cares next state?
@@ -123,10 +123,10 @@ class SingleAircraftState(MCTSState):
 
     def dist_intruder(self):
         distance = 5000
-        near_intruders_size = (len(self.state) - 9) // 4
+        near_intruders_size = (len(self.state) - 8) // 6
         for i in range(near_intruders_size):
-            intrux = self.state[4 * i + 0]
-            intruy = self.state[4 * i + 1]
+            intrux = self.state[6 * i + 0]
+            intruy = self.state[6 * i + 1]
             current_dist = self.metric(intrux, intruy, self.ownx, self.owny)
             if current_dist < distance:
                 distance = current_dist

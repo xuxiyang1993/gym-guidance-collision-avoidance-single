@@ -58,13 +58,6 @@ class SingleAircraftEnv(gym.Env):
 
         self.seed(2)
 
-        self.own_hist = []
-        self.int_hist = []
-
-        for i in range(self.intruder_size):
-            self.int_hist.append( [] )
-        
-
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -119,6 +112,12 @@ class SingleAircraftEnv(gym.Env):
 
         # reset the number of conflicts to 0
         self.no_conflict = 0
+
+        self.own_hist = []
+        self.int_hist = []
+
+        for i in range(self.intruder_size):
+            self.int_hist.append([])
 
         return self._get_ob()
 
@@ -186,6 +185,7 @@ class SingleAircraftEnv(gym.Env):
             # if this intruder out of map
             if not self.position_range.contains(intruder.position):
                 self.intruder_list[idx] = self.reset_intruder()
+                self.int_hist[idx] = []
 
             # if there is a conflict
             if dist_intruder < self.minimum_separation:

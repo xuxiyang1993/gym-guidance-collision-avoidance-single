@@ -6,7 +6,7 @@ class Config:
     window_width = 800
     window_height = 800
     diagonal = 800  # this one is used to normalize dist_to_intruder
-    intruder_size = 20
+    intruder_size = 80
     EPISODES = 1000
     G = 9.8
     tick = 30
@@ -23,12 +23,12 @@ class Config:
     min_speed = 50 / scale
     max_speed = 80 / scale
     d_speed = 5 / scale
-    speed_sigma = 0 / scale
-    position_sigma = 0 / scale
+    speed_sigma = 2 / scale
+    position_sigma = 10 / scale
 
     # heading in rad TBD
     d_heading = math.radians(5)
-    heading_sigma = math.radians(0)
+    heading_sigma = math.radians(4)
     
     # maximum steps of one episode
     max_steps = 1000

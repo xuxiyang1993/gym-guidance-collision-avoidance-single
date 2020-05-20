@@ -161,7 +161,7 @@ class SingleAircraftEnv(gym.Env):
 
         self._update_headings()
 
-        return self._get_ob(), reward, terminal, {'result': info}
+        return self._get_ob(), reward, terminal, info
 
     def _update_headings(self):
         # With some small probability 'p', have each intruder change it's heading
